@@ -489,7 +489,6 @@
 
         const maxAppearances = 3; // 한 멤버는 3회 이상 등장하지 않음
         const membersPerRoundMain = 3; // 1, 2, 3페이즈에서 보여주는 멤버 수 (3명)
-        // const membersPerRoundFinalShowdown = 2; // 결승 페이즈에서 보여주는 멤버 수 (이제 동점자 모두 포함하므로 고정값 아님)
         const initialSelectionTarget = 16; // 1차 선발 목표 인원
 
         // 2페이즈(최종 선발)에서 라운드를 얼마나 더 진행할지 결정하는 임계값
@@ -588,30 +587,31 @@
                 const sortedMembers = getSortedMembers(false);
                 const top3Names = sortedMembers.slice(0, 3).map(m => m.name);
                 eligible = eligible.filter(name => top3Names.includes(name));
+
                 // 최종 3인이 3명 미만이면 (예: 탈락해서 2명 남았으면) 바로 결승으로 넘어가거나 게임 종료
                 if (eligible.length < membersPerRoundMain) { // membersPerRoundMain는 3
-                    const currentTop = sortedMembers.slice(0, Math.min(sortedMembers.length, 2)); // 2명 이하 남았을 경우
-                    if (currentTop.length >= 2) { // 2명 이상 남아있다면 (공동 2위까지 포함)
-                        gamePhase = 'finalShowdown';
-                        currentRound = 0;
-                        currentRoundElement.textContent = `결승 라운드!`;
-                        updateInstructionText();
-                        alert("최종 3인 라운드 멤버 부족! 결승 라운드로 바로 진입합니다.");
-                        // 공동 1위, 2위 멤버들을 결승 대상으로 설정
+                    const currentTopCandidates = sortedMembers.slice(0, Math.min(sortedMembers.length, 2)); // 2명 이하 남았을 경우
+                    if (currentTopCandidates.length >= 2) { // 2명 이상 남아있다면 (공동 2위까지 포함하여 최종 진입)
+                        // 결승 진출 멤버들을 다시 계산 (공동 1위, 공동 2위 모두 포함)
                         const topScore = sortedMembers[0].score;
                         const secondScore = sortedMembers.length > 1 ? sortedMembers[1].score : -1;
 
-                        const finalShowdownCandidates = sortedMembers.filter(m => 
-                            m.score === topScore || m.score === secondScore
+                        const finalShowdownCandidates = sortedMembers.filter(m =>
+                            m.score === topScore || (secondScore !== -1 && m.score === secondScore)
                         ).map(m => m.name);
 
                         // 결승 진출자가 2명 이상인지 다시 확인
                         if (finalShowdownCandidates.length >= 2) {
-                            availableMembersForRound = finalShowdownCandidates;
+                            gamePhase = 'finalShowdown';
+                            currentRound = 0;
+                            currentRoundElement.textContent = `결승 라운드!`;
+                            updateInstructionText();
+                            alert("최종 3인 라운드 멤버 부족! 결승 라운드로 바로 진입합니다.");
+                            availableMembersForRound = finalShowdownCandidates; // 결승 진출자 설정
                             renderMembers(); // 결승 라운드 멤버 렌더링
                             return []; // 빈 배열 반환하여 selectMembersForRound 호출 방지
                         } else {
-                             // 결승 진출자가 2명 미만일 경우
+                            // 결승 진출자가 2명 미만일 경우
                             alert("결승 라운드를 진행할 수 있는 멤버가 부족합니다.");
                             gamePhase = 'results';
                             displayResults();
@@ -660,7 +660,7 @@
                 // selected에 이미 있는 멤버들과 candidate가 이전 라운드에서 같이 나왔던 적이 있는지 확인
                 for (const existingMember of selected) {
                     if (memberData[existingMember].previousRoundGroup.has(candidate) ||
-                        memberData[candidate].previousRoundRoundGroup.has(existingMember)) { // 양방향 체크
+                        memberData[candidate].previousRoundGroup.has(existingMember)) { // 양방향 체크
                         canAdd = false;
                         break;
                     }
@@ -752,7 +752,7 @@
                         const secondScore = sortedMembers[1].score;
 
                         const finalShowdownCandidates = sortedMembers.filter(m =>
-                            m.score === topScore || m.score === secondScore
+                            m.score === topScore || (secondScore !== -1 && m.score === secondScore)
                         ).map(m => m.name);
 
                         if (finalShowdownCandidates.length >= 2) {
@@ -801,7 +801,21 @@
 
         function renderMembers() {
             memberSelectionDiv.innerHTML = '';
-            availableMembersForRound.forEach(name => {
+            // 결승 라운드일 경우, availableMembersForRound의 멤버들을 모두 보여줌
+            // 그 외의 라운드는 3명을 보여줌
+            const membersToDisplay = (gamePhase === 'finalShowdown') ? availableMembersForRound : availableMembersForRound.slice(0, membersPerRoundMain);
+
+            // 중요: availableMembersForRound가 비어있으면 아무것도 렌더링되지 않음
+            if (membersToDisplay.length === 0) {
+                console.warn("렌더링할 멤버가 없습니다. 게임 상태를 확인하세요.");
+                // alert("게임 진행에 필요한 멤버가 없어 게임을 종료합니다.");
+                // gamePhase = 'results';
+                // displayResults();
+                return;
+            }
+
+
+            membersToDisplay.forEach(name => {
                 const card = document.createElement('div');
                 card.classList.add('member-card');
                 card.dataset.name = name;
@@ -836,9 +850,9 @@
 
             let maxDirectSelections;
             if (gamePhase === 'finalShowdown') {
-                maxDirectSelections = 1; // 결승은 1명만 직접 선택
+                maxDirectSelections = 1; // 결승은 1명만 직접 선택 (우승자)
             } else {
-                maxDirectSelections = 2; // 일반 라운드는 2명 직접 선택
+                maxDirectSelections = 2; // 일반 라운드는 2명 직접 선택 (1순위, 2순위)
             }
 
 
@@ -889,11 +903,11 @@
                     if (rankIndex === 0) { // 1순위 (선택된 멤버)
                         scoreToApply = scores.finalShowdownRound.rank1;
                         highestRankInThisRound = 1;
-                    } else if (currentRoundMembers.length > 1 && rankIndex === -1) { // 선택되지 않은 다른 멤버 (2순위)
-                        // 결승 라운드에서는 선택 순서에 없는 멤버는 2순위 (패자)
+                    } else if (rankIndex === -1) { // 선택되지 않은 다른 멤버 (이들은 모두 2순위 처리)
                         scoreToApply = scores.finalShowdownRound.rank2;
                         highestRankInThisRound = 2;
                     }
+                    // 결승 라운드에서는 3순위 (0점) 개념이 없음. 선택된 멤버 외에는 모두 2순위로 점수 부여
                 }
                  else { // 1페이즈, 2페이즈 점수 적용
                     if (rankIndex === 0) { // 1순위
