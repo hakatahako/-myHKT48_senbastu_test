@@ -571,7 +571,7 @@
                             <li>**3순위 (선택 없음)**: 0점 획득</li>
                         </ul>
                     </li>
-                    <li>**멤버 등장 횟수 제한**: 한 멤버는 라운드에 **최대 3회**까지만 등장할 수 있습니다.</li>
+                    <li>**멤버 등장 횟수 제한**: 한 멤버는 라운드에 **최대 4회**까지만 등장할 수 있습니다.</li>
                     <li>**멤버 조합 제한**:
                         <ul>
                             <li>**같은 3인 조합**은 두 번 다시 등장하지 않습니다. (예: A, B, C가 함께 등장했다면, 이후 라운드에서 다시 A, B, C가 함께 나오지 않습니다.)</li>
@@ -647,9 +647,10 @@
         let availableMembersForRound = []; // 현재 라운드에 표시될 멤버들
         let selected16Members = []; // 1페이즈에서 최종 선발된 16명 멤버 이름 목록
 
-        const maxAppearances = 3; // 한 멤버는 최대 3회 등장
+        // --- 멤버 등장 횟수 수정: 3회 -> 4회
+        const maxAppearances = 4; // 한 멤버는 최대 4회 등장
         
-        // 2페이즈 특별 등장 횟수 (고득점자 완화용 - 현재 3회로 통일)
+        // 2페이즈 특별 등장 횟수 (고득점자 완화용)
         const maxAppearancesPhase2Relaxed = 6; 
 
         const membersPerRound = 3; // 라운드당 보여주는 멤버 3명
@@ -758,53 +759,31 @@
             }
         }
 
-        function getEligibleMembersForRound() {
+        // --- getEligibleMembersForRound 함수 로직 강화 및 maxAppearances 4회 반영 ---
+        function getEligibleMembersForRound(allowRelaxedAppearances = false) {
             let eligible = [];
-            
+            let currentMaxAppearances = maxAppearances;
+
+            if (gamePhase === 'phase2' && allowRelaxedAppearances) {
+                currentMaxAppearances = maxAppearancesPhase2Relaxed;
+            }
+
             if (gamePhase === 'phase1') {
                 eligible = Object.keys(memberData).filter(name => 
-                    !memberData[name].eliminated && memberData[name].appearances < maxAppearances
+                    !memberData[name].eliminated && memberData[name].appearances < currentMaxAppearances
                 );
-                console.log(`[Round ${currentRound}, Phase 1] Initial eligible members (appearances < ${maxAppearances}): ${eligible.length}`);
-
             } else if (gamePhase === 'phase2') {
-                eligible = selected16Members.filter(name => !memberData[name].eliminated); // 2페이즈에서는 16인 안에 든 멤버만
+                // 2페이즈에서는 selected16Members 목록에 있는 멤버만 대상으로 함
+                eligible = selected16Members.filter(name => 
+                    !memberData[name].eliminated && memberData[name].appearances < currentMaxAppearances
+                );
 
-                // 모든 멤버가 2페이즈에서 최소 한 번은 등장해야 함
+                // 2페이즈에서 아직 등장하지 않은 멤버 우선 (모든 16인이 한 번은 나와야 하므로)
                 const notYetAppearedInPhase2 = eligible.filter(name => !memberData[name].appearedInPhase2);
                 if (notYetAppearedInPhase2.length > 0) {
-                    // 아직 등장하지 않은 멤버 우선
-                    eligible = notYetAppearedInPhase2.filter(name => memberData[name].appearances < maxAppearances);
-                    console.log(`[Round ${currentRound}, Phase 2] Members not yet appeared in P2 & appearances < ${maxAppearances}: ${eligible.length}`);
-                } else {
-                    // 모든 멤버가 한 번 이상 등장했으면, 등장 횟수 제한 내의 멤버만
-                    eligible = eligible.filter(name => memberData[name].appearances < maxAppearances);
-                    console.log(`[Round ${currentRound}, Phase 2] All appeared, eligible members (appearances < ${maxAppearances}): ${eligible.length}`);
-                }
-
-                // 등장 횟수 완화 (고득점자 우선) - 최종 인원 부족 시
-                // Note: 현재 maxAppearancesPhase2Relaxed는 6회, maxAppearances는 3회로 설정되어 있어
-                // 3회 등장 제한이 기본적으로 적용되나, 이 로직이 작동하면 6회까지 허용됨.
-                if (eligible.length < membersPerRound) { // 라운드에 필요한 3명보다 적으면
-                    console.warn(`[Round ${currentRound}, Phase 2] Not enough eligible members (${eligible.length}) with strict appearance limit. Attempting relaxation.`);
-                    
-                    const sortedAll16 = selected16Members
-                                            .filter(name => !memberData[name].eliminated)
-                                            .sort((a, b) => memberData[b].score - memberData[a].score); // 점수 높은 순 정렬
-                    
-                    let relaxedEligible = [...eligible]; // 현재 유효 멤버 목록에서 시작
-                    for (const memberName of sortedAll16) {
-                        if (relaxedEligible.length >= membersPerRound) break; // 3명 채워지면 중단
-                        // 이미 relaxedEligible에 없으면서, 완화된 등장 횟수 제한 내에 있는 멤버만 추가
-                        if (!relaxedEligible.includes(memberName) && memberData[memberName].appearances < maxAppearancesPhase2Relaxed) {
-                            relaxedEligible.push(memberName);
-                        }
-                    }
-                    eligible = relaxedEligible; 
-                    console.log(`[Round ${currentRound}, Phase 2] Eligible members after relaxation (appearances < ${maxAppearancesPhase2Relaxed}): ${eligible.length}`);
+                    eligible = notYetAppearedInPhase2;
                 }
             }
-            console.log(`[Round ${currentRound}] Final eligible pool size passed to selectMembersForRound: ${eligible.length}`);
             return eligible;
         }
 
@@ -818,71 +797,61 @@
             return sortedTrio.some(name => memberData[name].previousRoundTrios.has(trioString));
         }
 
+        // --- selectMembersForRound 로직 강화: 규칙 완화 단계 추가 ---
         function selectMembersForRound() {
             let selected = [];
-            let eligiblePool = getEligibleMembersForRound(); 
-
-            // eligiblePool이 3명 미만이면 더 이상 진행 불가
-            if (eligiblePool.length < membersPerRound) {
-                console.error(`[Round ${currentRound}] Critical error: Not enough eligible members in pool (${eligiblePool.length}) to form a round.`);
-                alert("더 이상 라운드를 진행할 수 있는 멤버가 부족합니다. 게임을 종료합니다.");
-                gamePhase = 'results'; 
-                displayResults();
-                return;
-            }
+            let eligiblePool = getEligibleMembersForRound(false); // 1단계: 엄격한 등장 횟수(4회) 적용
             
-            // 1. 엄격한 '같은 3인 조합은 두 번 나오지 않음' 규칙을 준수하는 조합 찾기
+            // 시도 1: 엄격한 등장 횟수 + 3인 조합 중복 불가 규칙 준수
             let potentialStrictCombinations = [];
-
-            // 3명 뽑는 모든 가능한 조합을 생성
-            for (let i = 0; i < eligiblePool.length; i++) {
-                for (let j = i + 1; j < eligiblePool.length; j++) {
-                    for (let k = j + 1; k < eligiblePool.length; k++) {
-                        const trio = [eligiblePool[i], eligiblePool[j], eligiblePool[k]];
-                        
-                        // 이 조합이 이전에 등장하지 않았는지 확인
-                        if (!hasTrioAppearedBefore(trio)) {
-                            potentialStrictCombinations.push(trio);
+            if (eligiblePool.length >= membersPerRound) {
+                for (let i = 0; i < eligiblePool.length; i++) {
+                    for (let j = i + 1; j < eligiblePool.length; j++) {
+                        for (let k = j + 1; k < eligiblePool.length; k++) {
+                            const trio = [eligiblePool[i], eligiblePool[j], eligiblePool[k]];
+                            if (!hasTrioAppearedBefore(trio)) {
+                                potentialStrictCombinations.push(trio);
+                            }
                         }
                     }
                 }
             }
-            
+
             if (potentialStrictCombinations.length > 0) {
-                // 엄격한 규칙을 만족하는 조합이 있다면 무작위로 하나 선택
                 selected = potentialStrictCombinations[Math.floor(Math.random() * potentialStrictCombinations.length)];
-                console.log(`[Round ${currentRound}] Strict combination found: ${selected}`);
+                console.log(`[Round ${currentRound}] Selected: Strict combination found (Appearances < ${maxAppearances}, No duplicate trio).`);
             } else {
-                // 2. 엄격한 조합을 찾을 수 없을 경우, 규칙을 완화하여 멤버 선택
-                // 이 상황은 "이전 코드는 좀 실망이었어 예상가능한 오류를 찾아내지 못했던것 같아"에 대한 핵심 대응
-                // "규칙 완화 (비상시)" 조건에 해당하며, 3인 조합 중복 불가 규칙을 일시적으로 무시함.
-                console.warn(`[Round ${currentRound}] No strict combination found based on previous round trios. Attempting relaxed selection.`);
+                // 시도 2: 엄격한 등장 횟수(4회) 유지 + 3인 조합 중복 불가 규칙 완화
+                console.warn(`[Round ${currentRound}] No strict trio found. Attempting to relax 3-member combo rule.`);
                 
-                selected = []; // 선택된 멤버 목록 초기화
-                
-                // 점수가 높은 멤버 우선으로 정렬 (최대한 좋은 멤버가 나오도록)
-                let finalEligiblePool = [...eligiblePool]; 
-                finalEligiblePool.sort((a, b) => memberData[b].score - memberData[a].score); 
-                
-                // 상위 3명 선택 (3인 조합 중복 규칙 무시)
-                for (let i = 0; i < membersPerRound && finalEligiblePool.length > 0; i++) {
-                    selected.push(finalEligiblePool.shift()); 
+                // 점수가 높은 멤버 우선으로 정렬하여 선택 시도
+                let tempEligible = [...eligiblePool].sort((a, b) => memberData[b].score - memberData[a].score);
+                selected = tempEligible.slice(0, membersPerRound);
+
+                if (selected.length < membersPerRound) {
+                    // 시도 3: 등장 횟수 제한까지 완화 (2페이즈에만 적용)
+                    if (gamePhase === 'phase2') {
+                        console.warn(`[Round ${currentRound}] Not enough members after relaxing combo rule. Attempting to relax appearance limit for Phase 2.`);
+                        eligiblePool = getEligibleMembersForRound(true); // 2단계: 완화된 등장 횟수(6회) 적용
+                        tempEligible = [...eligiblePool].sort((a, b) => memberData[b].score - memberData[a].score);
+                        selected = tempEligible.slice(0, membersPerRound);
+                    }
                 }
 
                 if (selected.length < membersPerRound) {
-                    // 완화된 규칙으로도 멤버를 충분히 선택하지 못했다면 비상 종료 (이 경우는 eligiblePool 자체가 너무 적을 때 발생)
-                    console.error(`[Round ${currentRound}] Critical error: Could not select enough members for the round even after relaxing combo rules. Selected: ${selected.length}`);
+                    console.error(`[Round ${currentRound}] Critical error: Could not select enough members (${selected.length}) even after all relaxations.`);
                     alert("더 이상 라운드를 진행할 수 있는 멤버가 부족합니다. 게임을 종료합니다.");
                     gamePhase = 'results'; 
                     displayResults();
                     return;
                 }
-                console.log(`[Round ${currentRound}] Fallback to relaxed combination selection. Selected: ${selected}`);
+                console.log(`[Round ${currentRound}] Selected: Relaxed combination or appearance limit applied.`);
             }
 
             availableMembersForRound = selected;
             renderMembers();
         }
+
 
         function startNewRound() {
             currentRound++;
@@ -916,7 +885,7 @@
             }
 
             // 모든 멤버가 등장 횟수 제한에 걸리거나, 남은 멤버가 3명 미만이면 게임 종료 (비상 탈출)
-            const canStillPlay = getEligibleMembersForRound().length >= membersPerRound;
+            const canStillPlay = getEligibleMembersForRound(true).length >= membersPerRound; // 모든 완화 규칙 적용 후에도 가능한지 확인
             if (!canStillPlay) {
                 alert("더 이상 라운드를 진행할 수 있는 멤버가 부족하여 게임을 종료합니다.");
                 gamePhase = 'results';
@@ -1107,11 +1076,24 @@
             }
 
             // 공동 순위가 3명 이상인 경우가 없어야 함 (4위부터 16위까지)
-            for (let i = 3; i < top16.length - 2; i++) { // 인덱스 3은 4위에 해당
-                if (top16[i].score === top16[i + 1].score && top16[i + 1].score === top16[i + 2].score) {
-                    console.log(`Final check fail: 공동 순위 3명 이상 발견 (순위 ${i+1}부터)`); return false; 
+            // 동점자가 3명 이상인 경우 확인
+            for (let i = 3; i < top16.length; i++) { 
+                let currentScore = top16[i].score;
+                let count = 0;
+                for (let j = i; j < top16.length; j++) {
+                    if (top16[j].score === currentScore) {
+                        count++;
+                    } else {
+                        break;
+                    }
                 }
+                if (count >= 3) {
+                    console.log(`Final check fail: 공동 순위 3명 이상 발견 (순위 ${i+1}부터), 점수: ${currentScore}`);
+                    return false;
+                }
+                i += (count - 1); // 이미 확인한 동점자는 건너뛰기
             }
+
 
             // 모든 16인 멤버가 2페이즈에서 최소 한 번씩은 등장했는지 확인
             const allAppearedInPhase2 = selected16Members.every(name => memberData[name].appearedInPhase2);
