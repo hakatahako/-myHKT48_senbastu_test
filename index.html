@@ -510,31 +510,21 @@
 
         <div id="welcomeScreen">
             <h2>MY HKT48 선발 게임에 오신 것을 환영합니다!</h2>
-            <h3>게임 방식 안내</h3>
             
-            <h4>페이즈 1: 16인 선발전</h4>
+            <h3>게임 방식</h3>
+            
+            <h4>16인 선발전</h4>
             <ul>
                 <li><strong>3명</strong>의 멤버가 등장합니다.</li>
                 <li>이 중에서 <strong>가장 좋아하는 멤버 2명</strong>을 순서대로 선택하세요.</li>
-                <li>선택받지 못한 멤버는 게임에서 <strong>탈락</strong>할 수 있습니다.</li>
-                <li>최종 <strong>16명</strong>의 멤버가 선발될 때까지 진행됩니다.</li>
             </ul>
 
-            <h4>페이즈 2: 센터 선발전</h4>
+            <h4>센터 선발전</h4>
             <ul>
-                <li>이제 <strong>16명의 멤버</strong>가 선발되었습니다!</li>
-                <li>이때부터 <strong>'당신의 센터를 뽑아주세요!'</strong> 라는 새로운 안내 문구가 나타나며 게임 방식이 바뀝니다.</li>
-                <li><strong>2명</strong>의 멤버가 등장하여 대결합니다.</li>
-                <li>이 중에서 <strong>당신의 센터</strong>라고 생각하는 한 명을 선택하세요.</li>
-                <li>선택받지 못한 멤버도 계속 기회를 얻지만, 너무 많은 라운드에서 선택받지 못하면 더 이상 등장하지 않을 수 있습니다.</li>
+                <li><strong>16명의 멤버</strong>가 선발되면, <strong>'당신의 센터를 뽑아주세요!'</strong>라는 안내 문구가 나타나며 게임 방식이 바뀝니다.</li>
+                <li><strong>2명</strong>의 멤버가 등장하며, 이 중에서 <strong>당신의 센터</strong>라고 생각하는 한 명을 선택하세요.</li>
             </ul>
 
-            <h4>동점자 처리</h4>
-            <ul>
-                <li><strong>공동 1등</strong>이 발생하면, 해당 멤버들끼리만 따로 <strong>단독 1등</strong>이 나올 때까지 <strong>재대결</strong>을 진행합니다.</li>
-                <li><strong>공동 2등</strong>이 여러 명일 경우, 페이즈 2에서 더 많이 선택받은 멤버가 우선됩니다.</li>
-            </ul>
-            
             <button id="startGameButton">게임 시작</button>
         </div>
 
@@ -588,13 +578,16 @@
         let availableMembersForRound = []; // 현재 라운드에 표시될 멤버들 (실제 렌더링될 멤버)
 
         const maxAppearancesPhase1 = 5; // 페이즈 1: 한 멤버는 5회 이상 등장하지 않음
-        const maxZeroScoreCount = 4; // 페이즈 1: 0점 4번 받으면 탈락
+        const maxZeroScoreCount = 3; // 페이즈 1: 0점 3번 받으면 탈락 (원래 4였으나 3으로 변경)
         const maxNotSelectedCountPhase2 = 4; // 페이즈 2: 4번 이상 선택받지 못하면 더 이상 등장하지 않음
 
         const membersPerRoundPhase1 = 3; // 페이즈 1에서 보여주는 멤버 수 (3명)
         const membersPerRoundPhase2 = 2; // 페이즈 2와 결승에서 보여주는 멤버 수 (2명)
 
         const initialSelectionTarget = 16; // 1차 선발 목표 인원 (페이즈 1 종료 조건)
+
+        // 라운드 간 딜레이 (0.1초 = 100ms)
+        const roundDelay = 100;
 
         // 점수 정의 (게임 설명에는 언급하지 않음)
         const scores = {
@@ -740,7 +733,7 @@
             let selected = [];
             const numMembersToSelect = (gamePhase === 'initialSelection') ? membersPerRoundPhase1 : membersPerRoundPhase2;
 
-            // 결승 라운드는 규칙 완화 없이 진행
+            // 결승 라운드는 규칙 완화 없이 진행 (단, 멤버가 부족하면 빈 배열 반환)
             if (gamePhase === 'tieBreakerForRank1') {
                 let eligiblePoolTieBreaker = getEligibleMembersForRound();
                 if (eligiblePoolTieBreaker.length < numMembersToSelect) {
@@ -753,16 +746,13 @@
             // 1단계: 엄격한 규칙 (등장 횟수, 그룹 제약) 적용하여 시도
             let eligiblePoolStrict = getEligibleMembersForRound(false, false);
             let attempts = 0;
-            const maxAttemptsStrict = 500;
+            const maxAttempts = 500; // 충분한 시도 횟수
 
-            if (eligiblePoolStrict.length < numMembersToSelect) {
-                 // 엄격한 규칙으로 이미 부족하면 바로 완화 시도
-                console.log("Strict eligible pool too small, moving to relaxed.");
-            } else {
+            if (eligiblePoolStrict.length >= numMembersToSelect) { // 엄격한 규칙으로 멤버를 충분히 뽑을 수 있다면 시도
                 let tempEligiblePool = [...eligiblePoolStrict]; // 복사하여 사용
                 tempEligiblePool.sort(() => Math.random() - 0.5);
 
-                while (selected.length < numMembersToSelect && attempts < maxAttemptsStrict && tempEligiblePool.length > 0) {
+                while (selected.length < numMembersToSelect && attempts < maxAttempts && tempEligiblePool.length > 0) {
                     const candidateIndex = Math.floor(Math.random() * tempEligiblePool.length);
                     const candidate = tempEligiblePool[candidateIndex];
 
@@ -790,13 +780,13 @@
             if (selected.length < numMembersToSelect) {
                 console.warn("경고: 함께 등장했던 그룹 규칙 때문에 충분한 멤버를 찾지 못하여 규칙을 완화합니다.");
                 selected = []; // 기존에 뽑힌 멤버 초기화
-                let eligiblePoolRelaxGroup = getEligibleMembersForRound(false, true); // 등장 횟수만 지킴
+                let eligiblePoolRelaxGroup = getEligibleMembersForRound(false, true); // 등장 횟수만 지킴 (그룹 제한 무시)
                 eligiblePoolRelaxGroup.sort(() => Math.random() - 0.5); // 다시 섞기
                 attempts = 0;
 
                 let tempEligiblePool = [...eligiblePoolRelaxGroup];
 
-                while (selected.length < numMembersToSelect && attempts < maxAttemptsStrict * 2 && tempEligiblePool.length > 0) {
+                while (selected.length < numMembersToSelect && attempts < maxAttempts * 2 && tempEligiblePool.length > 0) {
                     const candidateIndex = Math.floor(Math.random() * tempEligiblePool.length);
                     const candidate = tempEligiblePool[candidateIndex];
                     selected.push(candidate);
@@ -806,15 +796,16 @@
             }
 
             // 3단계: 그래도 부족하면, '등장 횟수' 규칙 완화하여 재시도 (페이즈 1에만 해당)
+            // 페이즈 2는 이미 등장 횟수 제한 없음 (getEligibleMembersForRound의 로직 확인)
             if (gamePhase === 'initialSelection' && selected.length < numMembersToSelect) {
                 console.warn("경고: 등장 횟수 규칙 때문에 충분한 멤버를 찾지 못하여 규칙을 완화합니다.");
                 selected = []; // 기존에 뽑힌 멤버 초기화
-                let eligiblePoolRelaxAll = getEligibleMembersForRound(true, true); // 모든 규칙 완화
+                let eligiblePoolRelaxAll = getEligibleMembersForRound(true, true); // 모든 규칙 완화 (등장 횟수, 그룹)
                 eligiblePoolRelaxAll.sort(() => Math.random() - 0.5); // 다시 섞기
                 attempts = 0;
 
                 let tempEligiblePool = [...eligiblePoolRelaxAll];
-                while (selected.length < numMembersToSelect && attempts < maxAttemptsStrict * 3 && tempEligiblePool.length > 0) {
+                while (selected.length < numMembersToSelect && attempts < maxAttempts * 3 && tempEligiblePool.length > 0) {
                     const candidateIndex = Math.floor(Math.random() * tempEligiblePool.length);
                     const candidate = tempEligiblePool[candidateIndex];
                     selected.push(candidate);
@@ -824,6 +815,7 @@
             }
 
             // 4단계: 최후의 수단 - 강제로 필요한 수만큼 채움 (남은 멤버 중 무작위)
+            // 모든 규칙을 완화했음에도 멤버가 부족하면, 강제로 채워 넣음
             if (selected.length < numMembersToSelect) {
                 console.warn("경고: 모든 규칙을 완화했음에도 멤버가 부족합니다. 남은 멤버 중 무작위로 채워 넣습니다.");
                 const allRemainingEligible = Object.keys(memberData).filter(name =>
@@ -858,14 +850,26 @@
                     alert(`1차 선발이 완료되었습니다! 이제 최종 선발 16인을 위한 경쟁을 시작합니다.`);
                 }
             } else if (gamePhase === 'finalSelection') {
+                // 페이즈 2 종료 조건: 등장 가능한 멤버가 1명 이하일 때
+                const eligibleForPhase2 = getEligibleMembersForRound();
+                if (eligibleForPhase2.length <= 1) { // 1명만 남았거나 더 이상 진행할 수 없는 경우
+                    // 만약 1명만 남았다면 그 멤버가 센터
+                    alert(`센터 선발이 완료되었습니다! 최종 센터는 ${eligibleForPhase2.length === 1 ? eligibleForPhase2[0] : '결정 불가(추가 투표 필요)'}입니다.`);
+                    gamePhase = 'results';
+                    displayResults();
+                    return;
+                }
+
                 // 페이즈 2에서 공동 1등 발생 시 결승 라운드로 전환
+                // 이 조건은 eligibleForPhase2.length > 1 일때만 의미 있음 (즉, 게임이 아직 끝나지 않았을 때)
                 const topScore = sortedMembers.length > 0 ? sortedMembers[0].score : -1;
                 const topRankMembers = sortedMembers.filter(m => m.score === topScore);
 
                 if (topRankMembers.length >= 2) {
                      // 현재 라운드에서 뽑을 멤버가 2명 미만일 경우에만 결승으로 진입
                     // 즉, 더 이상 페이즈2 라운드를 진행할 수 없을 때, 공동 1등이 있으면 결승으로
-                    if (getEligibleMembersForRound().length < membersPerRoundPhase2) { // getEligibleMembersForRound(false, false)
+                    // (getEligibleMembersForRound(false, false)는 모든 규칙을 지켰을 때의 후보군)
+                    if (getEligibleMembersForRound(false, false).length < membersPerRoundPhase2) { 
                         gamePhase = 'tieBreakerForRank1';
                         currentRound = 0; // 결승 라운드 카운트 초기화
                         alert("공동 1등 발생! 단독 1등을 가리기 위한 결승 라운드로 진입합니다.");
@@ -882,21 +886,26 @@
                     displayResults();
                     return;
                 }
+                // 결승 라운드에서 더 이상 진행할 멤버가 1명 이하면 게임 종료 (ex: 공동 1등 중 한 명이 탈락)
+                if (getEligibleMembersForRound().length <= 1) {
+                    alert("결승 라운드를 더 이상 진행할 수 없습니다. 최종 결과를 확인하세요.");
+                    gamePhase = 'results';
+                    displayResults();
+                    return;
+                }
             }
 
             // 2. 라운드에 등장할 멤버 선택
             // 변경된 gamePhase에 따라 새로운 eligiblePool을 가져옴
             availableMembersForRound = selectMembersForRound();
 
-            // 3. 더 이상 라운드를 진행할 멤버가 없으면 게임 종료 (결승 라운드 제외)
-            if (availableMembersForRound.length === 0) {
-                // 결승 라운드에서 1명만 남았다면 그 멤버가 우승 (위에서 이미 처리됨)
-                if (gamePhase !== 'results') { // 이미 결과로 전환되지 않았다면
-                    alert("더 이상 라운드를 진행할 수 있는 멤버가 부족하여 게임을 종료합니다.");
-                    gamePhase = 'results';
-                    displayResults();
-                    return;
-                }
+            // 3. 더 이상 라운드를 진행할 멤버가 없으면 게임 종료 (결승 라운드 포함)
+            // (이미 results로 전환되지 않았다면)
+            if (availableMembersForRound.length === 0 && gamePhase !== 'results') {
+                alert("더 이상 라운드를 진행할 수 있는 멤버가 부족하여 게임을 종료합니다.");
+                gamePhase = 'results';
+                displayResults();
+                return;
             }
 
             updateInstructionText();
@@ -959,7 +968,9 @@
                     clickedCard.querySelector('.selection-rank').style.opacity = '1';
                 }
                 if (selectionOrder.length === 2) {
-                    processRoundResults();
+                    // 모든 카드 클릭 비활성화
+                    Array.from(memberSelectionDiv.querySelectorAll('.member-card')).forEach(card => card.classList.add('processed'));
+                    setTimeout(processRoundResults, roundDelay); // 딜레이 적용
                 }
             } else if (gamePhase === 'finalSelection' || gamePhase === 'tieBreakerForRank1') {
                 if (selectionOrder.length < 1) { // 1명만 선택 가능
@@ -969,17 +980,14 @@
                     clickedCard.querySelector('.selection-rank').style.opacity = '1';
                 }
                 if (selectionOrder.length === 1) {
-                    processRoundResults();
+                    // 모든 카드 클릭 비활성화
+                    Array.from(memberSelectionDiv.querySelectorAll('.member-card')).forEach(card => card.classList.add('processed'));
+                    setTimeout(processRoundResults, roundDelay); // 딜레이 적용
                 }
             }
         }
 
         function processRoundResults() {
-            const currentSelectedCards = Array.from(memberSelectionDiv.querySelectorAll('.member-card'));
-
-            // 모든 카드 클릭 비활성화
-            currentSelectedCards.forEach(card => card.classList.add('processed'));
-
             if (gamePhase === 'initialSelection') {
                 const rank1Member = selectionOrder[0];
                 const rank2Member = selectionOrder[1];
@@ -1038,9 +1046,7 @@
             }
 
             // 잠시 후 다음 라운드 시작
-            setTimeout(() => {
-                startNewRound();
-            }, 1000);
+            startNewRound();
         }
 
         function displayResults() {
