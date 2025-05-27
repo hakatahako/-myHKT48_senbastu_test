@@ -854,319 +854,265 @@
                 // 페이즈 2 종료 조건: 등장 가능한 멤버가 1명 이하일 때
                 const eligibleForPhase2 = getEligibleMembersForRound();
                 if (eligibleForPhase2.length <= 1) { // 1명만 남았거나 더 이상 진행할 수 없는 경우
-                    // 만약 1명만 남았다면 그 멤버가 센터
-                    // alert(`센터 선발이 완료되었습니다! 최종 센터는 ${eligibleForPhase2.length === 1 ? eligibleForPhase2[0] : '결정 불가(추가 투표 필요)'}입니다.`); // 알림 제거
-                    gamePhase = 'results';
-                    displayResults();
-                    return;
-                }
-
-                // 페이즈 2에서 공동 1등 발생 시 결승 라운드로 전환
-                // 이 조건은 eligibleForPhase2.length > 1 일때만 의미 있음 (즉, 게임이 아직 끝나지 않았을 때)
-                const topScore = sortedMembers.length > 0 ? sortedMembers[0].score : -1;
-                const topRankMembers = sortedMembers.filter(m => m.score === topScore);
-
-                if (topRankMembers.length >= 2) {
-                     // 현재 라운드에서 뽑을 멤버가 2명 미만일 경우에만 결승으로 진입
-                    // 즉, 더 이상 페이즈2 라운드를 진행할 수 없을 때, 공동 1등이 있으면 결승으로
-                    // (getEligibleMembersForRound(false, false)는 모든 규칙을 지켰을 때의 후보군)
-                    if (getEligibleMembersForRound(false, false).length < membersPerRoundPhase2) { 
+                    // 이제 공동 1등 검사 로직 추가 (기존에는 여기서 바로 종료였음)
+                    const topScorers = getSortedMembers(false).filter((m, i, arr) => i === 0 || m.score === arr[0].score);
+                    if (topScorers.length > 1) {
                         gamePhase = 'tieBreakerForRank1';
-                        currentRound = 0; // 결승 라운드 카운트 초기화
-                        // alert("공동 1등 발생! 단독 1등을 가리기 위한 결승 라운드로 진입합니다."); // 알림 제거
+                        // console.log('공동 1등 발생! 결승 라운드로 전환:', topScorers.map(m => m.name)); // 디버그
+                        // 결승 라운드는 별도로 시작, 여기서는 바로 다음 단계로 넘어가지 않고 리턴
+                    } else {
+                        // 단독 1등이 확정되었거나 더 이상 진행할 멤버가 없는 경우
+                        gamePhase = 'results';
+                        displayResults();
+                        return;
                     }
                 }
             } else if (gamePhase === 'tieBreakerForRank1') {
-                // 결승 라운드에서 단독 1등 결정 시 게임 종료
-                const topScore = sortedMembers.length > 0 ? sortedMembers[0].score : -1;
-                const topRankMembers = sortedMembers.filter(m => m.score === topScore);
-
-                if (topRankMembers.length === 1) { // 단독 1등이 결정됨
-                    // alert(`단독 1위: ${topRankMembers[0].name}이(가) 결정되었습니다!`); // 알림 제거
-                    gamePhase = 'results';
-                    displayResults();
-                    return;
-                }
-                // 결승 라운드에서 더 이상 진행할 멤버가 1명 이하면 게임 종료 (ex: 공동 1등 중 한 명이 탈락)
-                if (getEligibleMembersForRound().length <= 1) {
-                    // alert("결승 라운드를 더 이상 진행할 수 없습니다. 최종 결과를 확인하세요."); // 알림 제거
+                // 결승 라운드 종료 조건: 1명만 남거나, 더 이상 라운드 진행 불가
+                const eligibleForTieBreaker = getEligibleMembersForRound();
+                if (eligibleForTieBreaker.length <= 1) {
                     gamePhase = 'results';
                     displayResults();
                     return;
                 }
             }
 
-            // 2. 라운드에 등장할 멤버 선택
-            // 변경된 gamePhase에 따라 새로운 eligiblePool을 가져옴
+
+            updateInstructionText();
+
+            // 2. 라운드에 표시할 멤버 선택
             availableMembersForRound = selectMembersForRound();
 
-            // 3. 더 이상 라운드를 진행할 멤버가 없으면 게임 종료 (결승 라운드 포함)
-            // (이미 results로 전환되지 않았다면)
-            if (availableMembersForRound.length === 0 && gamePhase !== 'results') {
-                // alert("더 이상 라운드를 진행할 수 있는 멤버가 부족하여 게임을 종료합니다."); // 알림 제거
+            // 만약 더 이상 진행할 멤버가 없다면 바로 결과 화면으로
+            if (availableMembersForRound.length === 0) {
+                console.warn("더 이상 라운드를 진행할 멤버가 없습니다. 결과를 표시합니다.");
                 gamePhase = 'results';
                 displayResults();
                 return;
             }
 
-            updateInstructionText();
-            renderMembers();
-        }
+            // 3. 멤버 카드 생성 및 표시
+            availableMembersForRound.forEach(memberName => {
+                const memberCard = document.createElement('div');
+                memberCard.classList.add('member-card');
+                memberCard.dataset.name = memberName;
 
-        function renderMembers() {
-            memberSelectionDiv.innerHTML = '';
-
-            if (availableMembersForRound.length === 0) {
-                console.warn("렌더링할 멤버가 없습니다. 게임 상태를 확인하세요.");
-                return;
-            }
-
-            // 페이즈 1에서는 3명, 페이즈 2와 결승에서는 2명 표시
-            const numMembersToDisplay = (gamePhase === 'initialSelection') ? membersPerRoundPhase1 : membersPerRoundPhase2;
-            const membersToRender = availableMembersForRound.slice(0, numMembersToDisplay);
-
-
-            membersToRender.forEach(name => {
-                const card = document.createElement('div');
-                card.classList.add('member-card');
-                card.dataset.name = name;
-                card.innerHTML = `
-                    <img src="./images/${name}.png" alt="${name}">
-                    <p>${name}</p>
+                // 이미지 경로 설정
+                const imageName = memberName.replace(/\s/g, '_') + '.webp'; // 공백을 언더스코어로 변경하고 .webp 확장자 추가
+                const imagePath = `img/${imageName}`; // 'img' 폴더에 이미지가 있다고 가정
+                
+                memberCard.innerHTML = `
+                    <img src="${imagePath}" alt="${memberName}">
+                    <p>${memberName}</p>
                     <div class="selection-rank"></div>
                 `;
-                card.addEventListener('click', handleCardClick);
-                memberSelectionDiv.appendChild(card);
+                memberCard.addEventListener('click', () => selectMember(memberName));
+                memberSelectionDiv.appendChild(memberCard);
+
+                // 등장 횟수 업데이트
+                memberData[memberName].appearances++;
+                memberData[memberName].lastSeen = currentRound;
+
+                // 함께 등장했던 멤버 기록 업데이트
+                const currentRoundGroup = availableMembersForRound.filter(m => m !== memberName);
+                currentRoundGroup.forEach(otherMember => {
+                    memberData[memberName].previousRoundGroup.add(otherMember);
+                });
             });
         }
 
-        function handleCardClick(event) {
-            const clickedCard = event.currentTarget;
-            const clickedMemberName = clickedCard.dataset.name;
 
-            if (clickedCard.classList.contains('processed')) {
+        function selectMember(selectedName) {
+            const memberCard = document.querySelector(`.member-card[data-name="${selectedName}"]`);
+
+            if (memberCard.classList.contains('processed')) {
                 return; // 이미 처리된 카드는 클릭 무시
             }
 
-            // 선택 취소 로직 (가장 마지막에 선택된 것만 취소)
-            const indexInSelection = selectionOrder.indexOf(clickedMemberName);
-            if (indexInSelection !== -1) {
-                if (indexInSelection === selectionOrder.length - 1) { // 마지막 선택 멤버인 경우에만 취소
-                    selectionOrder.pop();
-                    clickedCard.classList.remove('selected');
-                    clickedCard.querySelector('.selection-rank').textContent = '';
-                    clickedCard.querySelector('.selection-rank').style.opacity = '0';
-                }
-                return; // 이미 선택되었지만 마지막 선택이 아닌 경우 무시
-            }
-
-            // 새로운 선택 추가
+            // 페이즈 1 (16인 선발전)
             if (gamePhase === 'initialSelection') {
                 if (selectionOrder.length < 2) {
-                    selectionOrder.push(clickedMemberName);
-                    clickedCard.classList.add('selected');
-                    clickedCard.querySelector('.selection-rank').textContent = selectionOrder.length;
-                    clickedCard.querySelector('.selection-rank').style.opacity = '1';
+                    selectionOrder.push(selectedName);
+                    memberCard.classList.add('selected');
+                    memberCard.querySelector('.selection-rank').textContent = selectionOrder.length;
+
+                    if (selectionOrder.length === 2) {
+                        setTimeout(() => processSelectionsInitialPhase(), roundDelay);
+                    }
                 }
-                if (selectionOrder.length === 2) {
-                    // 모든 카드 클릭 비활성화
-                    Array.from(memberSelectionDiv.querySelectorAll('.member-card')).forEach(card => card.classList.add('processed'));
-                    setTimeout(processRoundResults, roundDelay); // 딜레이 적용
-                }
-            } else if (gamePhase === 'finalSelection' || gamePhase === 'tieBreakerForRank1') {
-                if (selectionOrder.length < 1) { // 1명만 선택 가능
-                    selectionOrder.push(clickedMemberName);
-                    clickedCard.classList.add('selected');
-                    clickedCard.querySelector('.selection-rank').textContent = selectionOrder.length;
-                    clickedCard.querySelector('.selection-rank').style.opacity = '1';
-                }
-                if (selectionOrder.length === 1) {
-                    // 모든 카드 클릭 비활성화
-                    Array.from(memberSelectionDiv.querySelectorAll('.member-card')).forEach(card => card.classList.add('processed'));
-                    setTimeout(processRoundResults, roundDelay); // 딜레이 적용
-                }
+            }
+            // 페이즈 2 (센터 선발전) 또는 결승 라운드 (공동 1등)
+            else if (gamePhase === 'finalSelection' || gamePhase === 'tieBreakerForRank1') {
+                selectionOrder.push(selectedName);
+                memberCard.classList.add('selected');
+                memberCard.querySelector('.selection-rank').textContent = 1; // 단일 선택이므로 항상 1위로 표시
+
+                setTimeout(() => processSelectionsFinalPhase(), roundDelay);
             }
         }
 
-        function processRoundResults() {
-            if (gamePhase === 'initialSelection') {
-                const rank1Member = selectionOrder[0];
-                const rank2Member = selectionOrder[1];
-                const unselectedMember = availableMembersForRound.find(name => name !== rank1Member && name !== rank2Member);
 
-                // 점수 부여
-                memberData[rank1Member].score += scores.phase1.rank1;
-                memberData[rank1Member].firstRankSelections++; // 1순위 득표수 증가
+        function processSelectionsInitialPhase() {
+            const allSelectedMembers = availableMembersForRound; // 이 라운드에 표시된 모든 멤버
 
-                memberData[rank2Member].score += scores.phase1.rank2;
-                memberData[rank2Member].secondRankSelections++; // 2순위 득표수 증가
+            allSelectedMembers.forEach(name => {
+                const memberCard = document.querySelector(`.member-card[data-name="${name}"]`);
+                memberCard.classList.add('processed'); // 카드 비활성화
 
-                if (unselectedMember) {
-                    memberData[unselectedMember].zeroScoreCount++;
-                    if (memberData[unselectedMember].zeroScoreCount >= maxZeroScoreCount) {
-                        memberData[unselectedMember].eliminated = true;
-                        console.log(`${unselectedMember} 0점 ${maxZeroScoreCount}회로 탈락!`);
+                if (name === selectionOrder[0]) { // 1순위 선택
+                    memberData[name].score += scores.phase1.rank1;
+                    memberData[name].firstRankSelections++;
+                    memberData[name].zeroScoreCount = 0; // 점수를 얻었으므로 0점 카운트 초기화
+                } else if (name === selectionOrder[1]) { // 2순위 선택
+                    memberData[name].score += scores.phase1.rank2;
+                    memberData[name].secondRankSelections++;
+                    memberData[name].zeroScoreCount = 0; // 점수를 얻었으므로 0점 카운트 초기화
+                } else { // 선택되지 않은 멤버 (3순위)
+                    memberData[name].score += scores.phase1.rank3; // 0점 추가 (변화 없음)
+                    memberData[name].zeroScoreCount++;
+                    if (memberData[name].zeroScoreCount >= maxZeroScoreCount) {
+                        memberData[name].eliminated = true; // 3번 이상 0점이면 탈락
+                        console.log(`${name} (initialSelection) 3회 0점 획득으로 탈락!`);
                     }
                 }
+            });
 
-                // 등장 횟수 및 함께 등장했던 멤버 기록
-                availableMembersForRound.forEach(name => {
-                    memberData[name].appearances++;
-                    memberData[name].lastSeen = currentRound;
-                    // previousRoundGroup은 선택된 멤버들만 기록 (선택 안 된 멤버는 기록하지 않음)
-                    const otherMembersInGroup = new Set(availableMembersForRound.filter(m => m !== name));
-                    memberData[name].previousRoundGroup = new Set([...memberData[name].previousRoundGroup, ...otherMembersInGroup]);
-                });
+            setTimeout(startNewRound, roundDelay * 2); // 다음 라운드 시작
+        }
 
-            } else if (gamePhase === 'finalSelection' || gamePhase === 'tieBreakerForRank1') {
-                const selectedMember = selectionOrder[0];
-                const notSelectedMember = availableMembersForRound.find(name => name !== selectedMember);
+        function processSelectionsFinalPhase() {
+            const selectedMember = selectionOrder[0];
+            const unselectedMember = availableMembersForRound.find(name => name !== selectedMember);
 
-                let currentScores;
+            const scoreType = gamePhase === 'tieBreakerForRank1' ? 'tieBreakerForRank1' : 'phase2';
+
+            // 선택된 멤버 처리
+            memberData[selectedMember].score += scores[scoreType].selected;
+            memberData[selectedMember].firstRankSelections++; // 1순위 득표수 카운트
+            memberData[selectedMember].notSelectedCountPhase2 = 0; // 선택받았으니 카운트 초기화
+
+            // 선택되지 않은 멤버 처리
+            if (unselectedMember) {
+                memberData[unselectedMember].score += scores[scoreType].notSelected;
+                // 페이즈 2에서만 탈락 기준 적용
                 if (gamePhase === 'finalSelection') {
-                    currentScores = scores.phase2;
-                    memberData[selectedMember].firstRankSelections++; // 페이즈 2의 3점도 1순위 득표수에 포함
-                } else { // tieBreakerForRank1
-                    currentScores = scores.tieBreakerForRank1;
-                    memberData[selectedMember].firstRankSelections++; // 결승 라운드 득점도 1순위 득표수에 포함
-                    if(notSelectedMember) memberData[notSelectedMember].secondRankSelections++; // 결승 2순위 득점
-                }
-
-                memberData[selectedMember].score += currentScores.selected;
-                if (notSelectedMember) {
-                    memberData[notSelectedMember].score += currentScores.notSelected;
-                    // 페이즈 2에서만 '선택받지 못한 횟수'를 기록
-                    if (gamePhase === 'finalSelection') {
-                        memberData[notSelectedMember].notSelectedCountPhase2++;
-                        if (memberData[notSelectedMember].notSelectedCountPhase2 >= maxNotSelectedCountPhase2) {
-                            memberData[notSelectedMember].eliminatedPhase2 = true;
-                            console.log(`${notSelectedMember} 페이즈 2에서 ${maxNotSelectedCountPhase2}회 미선택으로 탈락!`);
-                        }
+                    memberData[unselectedMember].notSelectedCountPhase2++;
+                    if (memberData[unselectedMember].notSelectedCountPhase2 >= maxNotSelectedCountPhase2) {
+                        memberData[unselectedMember].eliminatedPhase2 = true;
+                        console.log(`${unselectedMember} (finalSelection) 4회 미선택으로 탈락!`);
                     }
                 }
             }
 
-            // 잠시 후 다음 라운드 시작
-            startNewRound();
+            // 모든 카드 비활성화
+            availableMembersForRound.forEach(name => {
+                const memberCard = document.querySelector(`.member-card[data-name="${name}"]`);
+                memberCard.classList.add('processed');
+            });
+
+            setTimeout(startNewRound, roundDelay * 2); // 다음 라운드 시작
         }
+
 
         function displayResults() {
             gameScreen.style.display = 'none';
             resultsScreen.style.display = 'block';
-            tieBreakerInfoElement.style.display = 'none'; // 결과 화면에서는 동점자 정보 숨김
-
-            const sortedMembers = getSortedMembers(true); // 모든 멤버 포함하여 최종 순위 정렬
-
-            // 최종 3인 표시
             topMembersDisplay.innerHTML = '';
-            const top3 = sortedMembers.slice(0, 3);
-            if (top3[0]) {
-                const rank1Card = createTopMemberCard(top3[0].name, top3[0].score, 1);
-                topMembersDisplay.appendChild(rank1Card);
-            }
-            if (top3[1]) {
-                const rank2Card = createTopMemberCard(top3[1].name, top3[1].score, 2);
-                topMembersDisplay.appendChild(rank2Card);
-            }
-            if (top3[2]) {
-                const rank3Card = createTopMemberCard(top3[2].name, top3[2].score, 3);
-                topMembersDisplay.appendChild(rank3Card);
-            }
-
-            // 최종 선발 16인 리스트
             finalSelectionList.innerHTML = '';
-            // 탈락하지 않은 멤버들만 대상으로 (16인 선발은 탈락자 제외)
-            let final16Candidates = sortedMembers.filter(m => !m.eliminated && !m.eliminatedPhase2);
 
-            // 공동 2등 처리: 3점 득표수로 정렬
-            // 현재 코드의 정렬 로직은 이미 1순위 득표수(페이즈2의 3점도 포함)를 고려하고 있습니다.
-            // 따라서 16인까지 정확히 끊어내면 됩니다.
-            const actualFinal16 = final16Candidates.slice(0, initialSelectionTarget).map(m => m.name);
+            const sortedMembers = getSortedMembers(true); // 모든 멤버를 점수순으로 정렬
 
-            actualFinal16.forEach(name => {
-                const li = document.createElement('li');
-                li.textContent = name;
-                finalSelectionList.appendChild(li);
+            // 상위 3명 표시
+            const top3 = sortedMembers.slice(0, 3);
+            top3.forEach((member, index) => {
+                const rank = index + 1;
+                const memberCard = document.createElement('div');
+                memberCard.classList.add('top-member-card', `rank${rank}`);
+                memberCard.innerHTML = `
+                    <div class="rank-label">${rank}위</div>
+                    <img src="img/${member.name.replace(/\s/g, '_')}.webp" alt="${member.name}">
+                    <p>${member.name}</p>
+                    <p class="score">점수: ${member.score}</p>
+                `;
+                topMembersDisplay.appendChild(memberCard);
             });
+
+            // 최종 선발 16인 리스트 (점수가 0보다 크거나, 탈락하지 않은 멤버 중 상위 16명)
+            // 기준: 탈락하지 않은 멤버 중 점수가 높은 순으로 16명
+            const final16Members = getSortedMembers(false).slice(0, initialSelectionTarget);
+
+            if (final16Members.length > 0) {
+                final16Members.forEach((member, index) => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${index + 1}위: ${member.name} (${member.score}점)`;
+                    finalSelectionList.appendChild(listItem);
+                });
+            } else {
+                const listItem = document.createElement('li');
+                listItem.textContent = "선발된 멤버가 없습니다.";
+                finalSelectionList.appendChild(listItem);
+            }
         }
 
 
-        function createTopMemberCard(name, score, rank) {
-            const card = document.createElement('div');
-            card.classList.add('top-member-card', `rank${rank}`);
-            card.innerHTML = `
-                <div class="rank-label">${rank}위</div>
-                <img src="./images/${name}.png" alt="${name}">
-                <p>${name}</p>
-                <span class="score">${score}점</span>
-            `;
-            return card;
-        }
+        // 이벤트 리스너
+        startGameButton.addEventListener('click', initializeGame);
+        document.getElementById('resetGameButton').addEventListener('click', () => {
+            if (confirm('정말로 게임을 처음부터 초기화하시겠습니까?')) {
+                welcomeScreen.style.display = 'flex';
+                gameScreen.style.display = 'none';
+                resultsScreen.style.display = 'none';
+                initializeGame(); // 초기화 후 바로 게임 시작하도록 변경 (선택사항)
+                // 만약 초기화 시 welcome 화면으로만 가고 싶다면 위 initializeGame() 호출 제거
+            }
+        });
+        document.getElementById('restartGameButton').addEventListener('click', initializeGame);
 
-        // 결과 저장 (텍스트)
         document.getElementById('downloadTextResultButton').addEventListener('click', () => {
             const sortedMembers = getSortedMembers(true);
-            let textContent = "💖 MY HKT48 최종 선발 결과! 💖\n\n";
-
-            textContent += "--- 최종 3인 ---\n";
-            const top3 = sortedMembers.slice(0, 3);
-            top3.forEach((m, index) => {
-                textContent += `${index + 1}위: ${m.name}\n`; // 점수 제거
+            let resultText = "MY HKT48 선발 최종 결과\n\n";
+            resultText += "🏆 TOP 3 🏆\n";
+            sortedMembers.slice(0, 3).forEach((m, i) => {
+                resultText += `${i + 1}위: ${m.name} (${m.score}점)\n`;
+            });
+            resultText += "\n💖 최종 선발 16인 💖\n";
+            getSortedMembers(false).slice(0, initialSelectionTarget).forEach((m, i) => {
+                resultText += `${i + 1}위: ${m.name} (${m.score}점)\n`;
             });
 
-            textContent += "\n--- 최종 선발 16인 ---\n";
-            let final16Candidates = sortedMembers.filter(m => !m.eliminated && !m.eliminatedPhase2);
-            const actualFinal16 = final16Candidates.slice(0, initialSelectionTarget).map(m => m.name);
-
-
-            actualFinal16.forEach((name, index) => {
-                textContent += `${index + 1}. ${name}\n`;
-            });
-
-
-            const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'MY_HKT48_선발_결과.txt';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            const blob = new Blob([resultText], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'my_hkt48_ranking_results.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         });
 
-        // 결과 저장 (이미지)
         document.getElementById('downloadImageResultButton').addEventListener('click', () => {
-            html2canvas(document.querySelector('.container'), {
+            const container = document.querySelector('.container');
+            html2canvas(container, {
                 scale: 2, // 고해상도 이미지
-                useCORS: true, // 이미지 로딩 문제 해결
-                allowTaint: true, // 이미지 교차 출처 문제 (일부 브라우저에서 문제 될 수 있음)
+                useCORS: true, // 이미지 로드 시 CORS 문제 해결
+                allowTaint: true, // 이미지 오염 허용 (외부 이미지 사용 시 필요할 수 있음)
+                ignoreElements: (element) => {
+                    // 버튼은 스크린샷에서 제외
+                    return element.tagName === 'BUTTON' || element.id === 'downloadTextResultButton' || element.id === 'downloadImageResultButton' || element.id === 'restartGameButton';
+                }
             }).then(canvas => {
-                const link = document.createElement('a');
-                link.href = canvas.toDataURL('image/png');
-                link.download = 'MY_HKT48_선발_결과.png';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                const imageData = canvas.toDataURL('image/png');
+                const a = document.createElement('a');
+                a.href = imageData;
+                a.download = 'my_hkt48_ranking_results.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
             });
         });
 
-        // 게임 초기화
-        document.getElementById('resetGameButton').addEventListener('click', () => {
-            if (confirm("게임을 정말로 초기화하시겠습니까? 현재 진행 상황은 모두 사라집니다.")) {
-                initializeGame();
-            }
-        });
-
-        // 새 게임 시작
-        document.getElementById('restartGameButton').addEventListener('click', () => {
-            if (confirm("새 게임을 시작하시겠습니까?")) {
-                initializeGame();
-            }
-        });
-
-        // 게임 시작 버튼 리스너
-        startGameButton.addEventListener('click', initializeGame);
-
-        // 페이지 로드 시 환영 화면 표시
+        // Initialize welcome screen on load
         window.onload = () => {
             welcomeScreen.style.display = 'flex';
             gameScreen.style.display = 'none';
