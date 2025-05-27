@@ -269,6 +269,7 @@
             text-align: center;
             font-size: 1.1em;
             color: #555;
+            display: block; /* 항상 보이도록 설정 */
         }
         .final-selection-list h3 {
             color: #7b1fa2;
@@ -578,7 +579,7 @@
         let availableMembersForRound = []; // 현재 라운드에 표시될 멤버들 (실제 렌더링될 멤버)
 
         const maxAppearancesPhase1 = 5; // 페이즈 1: 한 멤버는 5회 이상 등장하지 않음
-        const maxZeroScoreCount = 3; // 페이즈 1: 0점 3번 받으면 탈락 (원래 4였으나 3으로 변경)
+        const maxZeroScoreCount = 3; // 페이즈 1: 0점 3번 받으면 탈락
         const maxNotSelectedCountPhase2 = 4; // 페이즈 2: 4번 이상 선택받지 못하면 더 이상 등장하지 않음
 
         const membersPerRoundPhase1 = 3; // 페이즈 1에서 보여주는 멤버 수 (3명)
@@ -847,14 +848,14 @@
                 if (nonEliminatedCount <= initialSelectionTarget) {
                     gamePhase = 'finalSelection';
                     currentRound = 0; // 페이즈 변경 시 라운드 초기화
-                    alert(`1차 선발이 완료되었습니다! 이제 최종 선발 16인을 위한 경쟁을 시작합니다.`);
+                    // alert(`1차 선발이 완료되었습니다! 이제 최종 선발 16인을 위한 경쟁을 시작합니다.`); // 알림 제거
                 }
             } else if (gamePhase === 'finalSelection') {
                 // 페이즈 2 종료 조건: 등장 가능한 멤버가 1명 이하일 때
                 const eligibleForPhase2 = getEligibleMembersForRound();
                 if (eligibleForPhase2.length <= 1) { // 1명만 남았거나 더 이상 진행할 수 없는 경우
                     // 만약 1명만 남았다면 그 멤버가 센터
-                    alert(`센터 선발이 완료되었습니다! 최종 센터는 ${eligibleForPhase2.length === 1 ? eligibleForPhase2[0] : '결정 불가(추가 투표 필요)'}입니다.`);
+                    // alert(`센터 선발이 완료되었습니다! 최종 센터는 ${eligibleForPhase2.length === 1 ? eligibleForPhase2[0] : '결정 불가(추가 투표 필요)'}입니다.`); // 알림 제거
                     gamePhase = 'results';
                     displayResults();
                     return;
@@ -872,7 +873,7 @@
                     if (getEligibleMembersForRound(false, false).length < membersPerRoundPhase2) { 
                         gamePhase = 'tieBreakerForRank1';
                         currentRound = 0; // 결승 라운드 카운트 초기화
-                        alert("공동 1등 발생! 단독 1등을 가리기 위한 결승 라운드로 진입합니다.");
+                        // alert("공동 1등 발생! 단독 1등을 가리기 위한 결승 라운드로 진입합니다."); // 알림 제거
                     }
                 }
             } else if (gamePhase === 'tieBreakerForRank1') {
@@ -881,14 +882,14 @@
                 const topRankMembers = sortedMembers.filter(m => m.score === topScore);
 
                 if (topRankMembers.length === 1) { // 단독 1등이 결정됨
-                    alert(`단독 1위: ${topRankMembers[0].name}이(가) 결정되었습니다!`);
+                    // alert(`단독 1위: ${topRankMembers[0].name}이(가) 결정되었습니다!`); // 알림 제거
                     gamePhase = 'results';
                     displayResults();
                     return;
                 }
                 // 결승 라운드에서 더 이상 진행할 멤버가 1명 이하면 게임 종료 (ex: 공동 1등 중 한 명이 탈락)
                 if (getEligibleMembersForRound().length <= 1) {
-                    alert("결승 라운드를 더 이상 진행할 수 없습니다. 최종 결과를 확인하세요.");
+                    // alert("결승 라운드를 더 이상 진행할 수 없습니다. 최종 결과를 확인하세요."); // 알림 제거
                     gamePhase = 'results';
                     displayResults();
                     return;
@@ -902,7 +903,7 @@
             // 3. 더 이상 라운드를 진행할 멤버가 없으면 게임 종료 (결승 라운드 포함)
             // (이미 results로 전환되지 않았다면)
             if (availableMembersForRound.length === 0 && gamePhase !== 'results') {
-                alert("더 이상 라운드를 진행할 수 있는 멤버가 부족하여 게임을 종료합니다.");
+                // alert("더 이상 라운드를 진행할 수 있는 멤버가 부족하여 게임을 종료합니다."); // 알림 제거
                 gamePhase = 'results';
                 displayResults();
                 return;
@@ -1074,57 +1075,13 @@
 
             // 최종 선발 16인 리스트
             finalSelectionList.innerHTML = '';
+            // 탈락하지 않은 멤버들만 대상으로 (16인 선발은 탈락자 제외)
             let final16Candidates = sortedMembers.filter(m => !m.eliminated && !m.eliminatedPhase2);
 
             // 공동 2등 처리: 3점 득표수로 정렬
-            final16Candidates.sort((a, b) => {
-                if (b.score !== a.score) return b.score - a.score;
-                return b.firstRankSelections - a.firstRankSelections; // 3점 득표수 (phase2의 3점도 포함)
-            });
-
-            const actualFinal16 = [];
-            let currentScore = -1;
-            let currentFirstRankSelections = -1;
-            let membersAtCurrentRank = 0; // 현재 등수에 몇 명 있는지
-
-            for (let i = 0; i < final16Candidates.length; i++) {
-                const member = final16Candidates[i];
-
-                if (actualFinal16.length >= initialSelectionTarget) {
-                    // 이미 16명이 채워졌고, 다음 멤버는 이전 멤버와 동점이 아니면 종료
-                    if (member.score < currentScore || member.firstRankSelections < currentFirstRankSelections) {
-                        break;
-                    }
-                }
-
-                if (i === 0) { // 첫 번째 멤버는 무조건 추가 (1등)
-                    actualFinal16.push(member.name);
-                    currentScore = member.score;
-                    currentFirstRankSelections = member.firstRankSelections;
-                    membersAtCurrentRank = 1;
-                } else if (member.score === currentScore && member.firstRankSelections === currentFirstRankSelections) {
-                    // 점수와 3점 득표수가 같으면 같은 등수로 처리
-                    membersAtCurrentRank++;
-                    // 현재 등수가 16등보다 낮은 등수이고, 2등 동점자가 2명 이하면 허용
-                    if (actualFinal16.length < initialSelectionTarget - 1 && membersAtCurrentRank <= 2) {
-                        actualFinal16.push(member.name);
-                    } else if (actualFinal16.length === initialSelectionTarget - 1 && membersAtCurrentRank <= 2) {
-                        // 15번째 멤버까지 왔고, 다음 멤버가 2등 동점자이면서 2명 이내라면 추가
-                        actualFinal16.push(member.name);
-                    } else if (actualFinal16.length < initialSelectionTarget && membersAtCurrentRank <= 1) {
-                        // 16번째 멤버를 채울 때, 단독이거나 마지막 2등까지
-                        actualFinal16.push(member.name);
-                    }
-                } else { // 새로운 등수
-                    currentScore = member.score;
-                    currentFirstRankSelections = member.firstRankSelections;
-                    membersAtCurrentRank = 1;
-                    if (actualFinal16.length < initialSelectionTarget) {
-                        actualFinal16.push(member.name);
-                    }
-                }
-            }
-
+            // 현재 코드의 정렬 로직은 이미 1순위 득표수(페이즈2의 3점도 포함)를 고려하고 있습니다.
+            // 따라서 16인까지 정확히 끊어내면 됩니다.
+            const actualFinal16 = final16Candidates.slice(0, initialSelectionTarget).map(m => m.name);
 
             actualFinal16.forEach(name => {
                 const li = document.createElement('li');
@@ -1159,50 +1116,7 @@
 
             textContent += "\n--- 최종 선발 16인 ---\n";
             let final16Candidates = sortedMembers.filter(m => !m.eliminated && !m.eliminatedPhase2);
-
-            // 공동 2등 처리 로직 (displayResults와 동일하게 적용)
-            final16Candidates.sort((a, b) => {
-                if (b.score !== a.score) return b.score - a.score;
-                return b.firstRankSelections - a.firstRankSelections;
-            });
-
-            const actualFinal16 = [];
-            let currentScore = -1;
-            let currentFirstRankSelections = -1;
-            let membersAtCurrentRank = 0;
-
-            for (let i = 0; i < final16Candidates.length; i++) {
-                const member = final16Candidates[i];
-
-                if (actualFinal16.length >= initialSelectionTarget) {
-                    if (member.score < currentScore || member.firstRankSelections < currentFirstRankSelections) {
-                        break;
-                    }
-                }
-
-                if (i === 0) {
-                    actualFinal16.push(member.name);
-                    currentScore = member.score;
-                    currentFirstRankSelections = member.firstRankSelections;
-                    membersAtCurrentRank = 1;
-                } else if (member.score === currentScore && member.firstRankSelections === currentFirstRankSelections) {
-                    membersAtCurrentRank++;
-                    if (actualFinal16.length < initialSelectionTarget - 1 && membersAtCurrentRank <= 2) {
-                         actualFinal16.push(member.name);
-                    } else if (actualFinal16.length === initialSelectionTarget - 1 && membersAtCurrentRank <= 2) {
-                         actualFinal16.push(member.name);
-                    } else if (actualFinal16.length < initialSelectionTarget && membersAtCurrentRank <= 1) {
-                         actualFinal16.push(member.name);
-                    }
-                } else {
-                    currentScore = member.score;
-                    currentFirstRankSelections = member.firstRankSelections;
-                    membersAtCurrentRank = 1;
-                    if (actualFinal16.length < initialSelectionTarget) {
-                        actualFinal16.push(member.name);
-                    }
-                }
-            }
+            const actualFinal16 = final16Candidates.slice(0, initialSelectionTarget).map(m => m.name);
 
 
             actualFinal16.forEach((name, index) => {
