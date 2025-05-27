@@ -269,7 +269,6 @@
             text-align: center;
             font-size: 1.1em;
             color: #555;
-            display: block; /* 항상 보이도록 설정 */
         }
         .final-selection-list h3 {
             color: #7b1fa2;
@@ -305,70 +304,101 @@
         .restart-button-group button {
             width: 250px;
         }
-        /* 동점자 라운드 시 표시될 안내 텍스트 스타일 */
+        /* 동점자 라운드 시 표시될 안내 텍스트 스타일 (이제 사용 안 함) */
         .tie-breaker-info {
             font-weight: bold;
             color: #ad1457;
             font-size: 1.1em;
             margin-bottom: 15px;
-            display: none;
+            display: none !important; /* 이 요소를 완전히 숨김 */
         }
-
-        /* Welcome Screen Styles */
-        #welcomeScreen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 30px;
-            text-align: center;
-        }
-        #welcomeScreen h2 {
-            color: #ad1457;
-            font-size: 2.2em;
-            margin-bottom: 20px;
-        }
-        #welcomeScreen h3 {
-            color: #7b1fa2;
-            font-size: 1.5em;
-            margin-top: 25px;
-            margin-bottom: 10px;
-        }
-        #welcomeScreen p {
-            font-size: 1.1em;
-            margin-bottom: 5px;
-        }
-        #welcomeScreen ul {
-            list-style: none;
-            padding: 0;
-            margin: 10px 0 20px 0;
-            text-align: left;
-            width: 100%;
-            max-width: 500px;
-        }
-        #welcomeScreen li {
-            background-color: #f3e5f5;
-            padding: 10px 15px;
-            margin-bottom: 8px;
-            border-radius: 8px;
-            border: 1px solid #ce93d8;
-            font-size: 1em;
-        }
-        #startGameButton {
-            background-color: #ad1457;
-            color: white;
-            padding: 18px 40px;
-            font-size: 1.5em;
-            margin-top: 30px;
-            border-radius: 12px;
-        }
-        #startGameButton:hover {
-            background-color: #880e4f;
-        }
-
 
         @keyframes pulse {
             0% { opacity: 1; }
             100% { opacity: 0.7; }
+        }
+
+        /* ----- 새로 추가된 CSS ----- */
+        #rulesScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        #rulesScreen p {
+            font-size: 1.2em;
+            color: #555;
+            line-height: 1.8;
+            max-width: 600px;
+        }
+        #rulesScreen button {
+            background-color: #ad1457;
+            color: white;
+        }
+        #rulesScreen button:hover {
+            background-color: #920b4a;
+        }
+
+        #finalSelectionDisplay {
+            display: none; /* 초기에는 숨김 */
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px dashed #eee;
+            text-align: center;
+        }
+        #finalSelectionDisplay h2 {
+            color: #ad1457;
+            font-size: 2.2em;
+            margin-bottom: 30px;
+        }
+        .selected-16-members {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px; /* 16명을 위한 작은 간격 */
+            margin-bottom: 30px;
+        }
+        .selected-16-member-card {
+            border: 1px solid #ffccbc;
+            border-radius: 8px;
+            padding: 5px;
+            text-align: center;
+            width: 120px; /* 16명 표시를 위한 작은 카드 크기 */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            background-color: #ffebee;
+        }
+        .selected-16-member-card img {
+            width: 100px; /* 이미지 크기 */
+            height: 100px; /* 이미지 크기 */
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 5px;
+        }
+        .selected-16-member-card p {
+            font-size: 0.9em;
+            font-weight: bold;
+            color: #ad1457;
+            margin: 0;
+        }
+
+        #startCenterSelectionButton {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s, box-shadow 0.2s;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-top: 20px;
+        }
+        #startCenterSelectionButton:hover {
+            background-color: #45a049;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
         }
 
         /* 모바일 반응형 */
@@ -383,7 +413,7 @@
             h1 {
                 font-size: 1.8em;
             }
-            /* 모바일에서 라운드 정보와 '오늘의 멤버' 문구 숨김 */
+            /* 모바일에서 라운드 정보와 '3명 중 좋아하는 순서대로 2명을 선택하세요!' 문구 숨김 */
             .round-info, h2 {
                 display: none;
             }
@@ -393,6 +423,8 @@
                 margin-top: 0;
                 margin-bottom: 15px;
             }
+            /* .tie-breaker-info 는 위에서 !important로 완전히 숨김 */
+
             .member-display {
                 flex-direction: column;
                 align-items: center;
@@ -484,23 +516,21 @@
                 width: 90%;
             }
 
-            /* Welcome Screen Mobile Styles */
-            #welcomeScreen h2 {
-                font-size: 1.8em;
+            /* 2페이즈 16명 카드 모바일 */
+            .selected-16-member-card {
+                width: 80px; /* 더 작게 */
+                padding: 3px;
             }
-            #welcomeScreen h3 {
-                font-size: 1.3em;
+            .selected-16-member-card img {
+                width: 70px;
+                height: 70px;
             }
-            #welcomeScreen p {
-                font-size: 0.9em;
+            .selected-16-member-card p {
+                font-size: 0.7em;
             }
-            #welcomeScreen li {
-                font-size: 0.9em;
-                padding: 8px 10px;
-            }
-            #startGameButton {
-                padding: 15px 30px;
-                font-size: 1.2em;
+            #startCenterSelectionButton {
+                width: 90%;
+                font-size: 1.1em;
             }
         }
     </style>
@@ -509,39 +539,32 @@
     <div class="container">
         <h1>MY HKT48 선발</h1>
 
-        <div id="welcomeScreen">
-            <h2>MY HKT48 선발 게임에 오신 것을 환영합니다!</h2>
-            
-            <h3>게임 방식</h3>
-            
-            <h4>16인 선발전</h4>
-            <ul>
-                <li><strong>3명</strong>의 멤버가 등장합니다.</li>
-                <li>이 중에서 <strong>가장 좋아하는 멤버 2명</strong>을 순서대로 선택하세요.</li>
-            </ul>
-
-            <h4>센터 선발전</h4>
-            <ul>
-                <li><strong>16명의 멤버</strong>가 선발되면, <strong>'당신의 센터를 뽑아주세요!'</strong>라는 안내 문구가 나타나며 게임 방식이 바뀝니다.</li>
-                <li><strong>2명</strong>의 멤버가 등장하며, 이 중에서 <strong>당신의 센터</strong>라고 생각하는 한 명을 선택하세요.</li>
-            </ul>
-
+        <div id="rulesScreen">
+            <p>
+                당신의 HKT48 **최종 선발 16인**을 선택해주세요!<br>
+                그리고 그 중 **당신의 센터**를 선발해 보세요!
+            </p>
             <button id="startGameButton">게임 시작</button>
         </div>
 
         <div id="gameScreen" style="display: none;">
             <p id="instructionText" style="font-weight: bold; color: #ad1457;"></p>
-            <p id="tieBreakerInfo" class="tie-breaker-info" style="display: none;">공동 1등 재대결 라운드!</p>
-
             <div class="round-info">
-                <span id="currentRound"></span> 라운드
+                <span id="currentRound"></span>
             </div>
-            <h2 id="selectionInstruction"></h2>
+            <h2>3명 중 좋아하는 순서대로 2명을 선택하세요!</h2>
             <div class="member-display" id="memberSelection">
             </div>
             <div class="button-group">
                 <button id="resetGameButton">게임 초기화</button>
             </div>
+        </div>
+
+        <div id="finalSelectionDisplay" style="display: none;">
+            <h2>MY HKT48 최종 선발 16인</h2>
+            <div class="selected-16-members" id="selected16MembersDisplay">
+                </div>
+            <button id="startCenterSelectionButton">센터 선발전 시작</button>
         </div>
 
         <div id="resultsScreen" class="results-screen">
@@ -564,7 +587,7 @@
     <script>
         const memberNames = [
             "나가노 라라", "나카노 미나미", "다나카 이오리", "류토 아야네", "마츠나가 유이", "마츠모토 모카",
-            "모리사키 사아야", "사카모토 리노", "시부이 미나", "아오키 히나코", "아키요시 유카","야나세 레이아","야마우치 유나","야마카와 마리아",
+            "모리사키 사아야", "사카모토 리노", "시부이 미나", "아오키 히나코", "아키요시 유카", "야나세 레이아", "야마우치 유나", "야마카와 마리아",
             "야스이 히나", "에구치 코코하", "에우라 유카", "오오바 리사키", "오오우치 린카", "요시다 메이", "이마무라 마리아", "이시마츠 유이나",
             "이시바시 이부키", "이시이 아야네", "이시카와 아미유", "이하라 한나", "이자와 미유", "이지마 리리아", "이치무라 아이리", "이쿠노 리나",
             "지토우에 네네", "츠루카와 나치", "츠츠미 후카", "카타히라 사라", "쿠레 유나", "쿠리야마 리나", "쿠리하라 사에", "키타가와 히이로",
@@ -573,553 +596,566 @@
 
         let memberData = {};
         let currentRound = 0;
-        // 게임 페이즈: 'welcome', 'initialSelection', 'finalSelection', 'tieBreakerForRank1', 'results'
-        let gamePhase = 'welcome';
+        // 게임 페이즈: 'rules' (시작 화면), 'phase1' (16인 선발), 'phase2' (최종 순위 결정), 'results'
+        let gamePhase = 'rules';
         let selectionOrder = []; // 현재 라운드에서 선택된 멤버들의 이름 (순서대로)
-        let availableMembersForRound = []; // 현재 라운드에 표시될 멤버들 (실제 렌더링될 멤버)
+        let availableMembersForRound = []; // 현재 라운드에 표시될 멤버들
+        let selected16Members = []; // 1페이즈에서 최종 선발된 16명 멤버 이름 목록
 
-        const maxAppearancesPhase1 = 5; // 페이즈 1: 한 멤버는 5회 이상 등장하지 않음
-        const maxZeroScoreCount = 3; // 페이즈 1: 0점 3번 받으면 탈락
-        const maxNotSelectedCountPhase2 = 4; // 페이즈 2: 4번 이상 선택받지 못하면 더 이상 등장하지 않음
+        const maxAppearancesPhase1 = 4; // 1페이즈: 한 멤버는 최대 4회 등장
+        const maxAppearancesPhase2Initial = 4; // 2페이즈: 기본 최대 4회 등장
+        const maxAppearancesPhase2Relaxed = 6; // 2페이즈: 완화 시 최대 6회 등장 (고득점자 우선)
 
-        const membersPerRoundPhase1 = 3; // 페이즈 1에서 보여주는 멤버 수 (3명)
-        const membersPerRoundPhase2 = 2; // 페이즈 2와 결승에서 보여주는 멤버 수 (2명)
+        const membersPerRound = 3; // 라운드당 보여주는 멤버 3명
+        const initialSelectionTarget = 16; // 1차 선발 목표 인원
 
-        const initialSelectionTarget = 16; // 1차 선발 목표 인원 (페이즈 1 종료 조건)
-
-        // 라운드 간 딜레이 (0.1초 = 100ms)
-        const roundDelay = 100;
-
-        // 점수 정의 (게임 설명에는 언급하지 않음)
+        // 점수 정의
         const scores = {
-            phase1: { // 1차 선발 단계 점수
-                rank1: 5, // 1순위
-                rank2: 3, // 2순위
-                rank3: 0  // 3순위 (선택 없음)
+            phase1: { // 1페이즈 점수
+                rank1: 10,
+                rank2: 4,
+                rank3: 0 // 3순위 (선택받지 못한 멤버)
             },
-            phase2: { // 센터 선발 단계 점수
-                selected: 3,   // 선택 받은 멤버
-                notSelected: 1 // 선택 받지 못한 멤버
-            },
-            tieBreakerForRank1: { // 1등 동점자 결승 라운드 점수
-                rank1: 20, // 1순위
-                rank2: 10  // 2순위
+            phase2: { // 2페이즈 점수 (1페이즈와 동일)
+                rank1: 10,
+                rank2: 4,
+                rank3: 0
             }
         };
 
-        const welcomeScreen = document.getElementById('welcomeScreen');
-        const startGameButton = document.getElementById('startGameButton');
         const instructionTextElement = document.getElementById('instructionText');
         const currentRoundElement = document.getElementById('currentRound');
-        const selectionInstructionElement = document.getElementById('selectionInstruction'); // h2 태그
         const memberSelectionDiv = document.getElementById('memberSelection');
+        const rulesScreen = document.getElementById('rulesScreen');
         const gameScreen = document.getElementById('gameScreen');
+        const finalSelectionDisplay = document.getElementById('finalSelectionDisplay');
+        const selected16MembersDisplay = document.getElementById('selected16MembersDisplay');
+        const startCenterSelectionButton = document.getElementById('startCenterSelectionButton');
         const resultsScreen = document.getElementById('resultsScreen');
         const topMembersDisplay = document.getElementById('topMembersDisplay');
         const finalSelectionList = document.getElementById('finalSelectionList');
-        const tieBreakerInfoElement = document.getElementById('tieBreakerInfo');
+
+        document.getElementById('startGameButton').addEventListener('click', () => {
+            initializeGame();
+            gamePhase = 'phase1';
+            rulesScreen.style.display = 'none';
+            gameScreen.style.display = 'block';
+            startNewRound(); // 딜레이 없이 바로 다음 라운드 시작
+        });
+
+        document.getElementById('resetGameButton').addEventListener('click', () => {
+            if (confirm("정말 게임을 초기화하시겠습니까? 현재 진행 상황은 모두 사라집니다.")) {
+                location.reload(); // 페이지 새로고침으로 게임 초기화
+            }
+        });
+
+        document.getElementById('restartGameButton').addEventListener('click', () => {
+            location.reload(); // 페이지 새로고침으로 게임 초기화
+        });
+
+        document.getElementById('downloadTextResultButton').addEventListener('click', downloadTextResult);
+        document.getElementById('downloadImageResultButton').addEventListener('click', downloadImageResult);
+
+        // 2페이즈 시작 버튼 이벤트 리스너
+        startCenterSelectionButton.addEventListener('click', () => {
+            gamePhase = 'phase2';
+            finalSelectionDisplay.style.display = 'none';
+            gameScreen.style.display = 'block';
+            startNewRound(); // 딜레이 없이 2페이즈 첫 라운드 시작
+        });
+
 
         function initializeGame() {
             memberData = {};
             memberNames.forEach(name => {
                 memberData[name] = {
                     score: 0,
-                    appearances: 0, // 페이즈 1 등장 횟수
-                    zeroScoreCount: 0, // 페이즈 1: 0점 받은 횟수
-                    notSelectedCountPhase2: 0, // 페이즈 2: 선택받지 못한 횟수 (1점 받은 횟수)
-                    eliminated: false, // 페이즈 1 탈락 기준
-                    eliminatedPhase2: false, // 페이즈 2 탈락 기준
-                    lastSeen: -1, // 마지막 등장 라운드
+                    appearances: 0,
+                    zeroScoreCount: 0, // 0점 받은 횟수 (1페이즈 탈락 조건용)
+                    eliminated: false, // 1페이즈 탈락 여부
                     previousRoundGroup: new Set(), // 함께 등장했던 멤버들 기록 (세트)
-                    firstRankSelections: 0, // 1순위 선택 받은 횟수 (페이즈1: 5점, 페이즈2: 3점, 결승: 20점)
-                    secondRankSelections: 0 // 2순위 선택 받은 횟수 (페이즈1: 3점, 결승: 10점)
+                    appearedInPhase2: false // 2페이즈에서 등장했는지 여부
                 };
             });
             currentRound = 0;
-            gamePhase = 'initialSelection'; // 게임 시작 버튼 클릭 시 initialSelection으로 바로 시작
             selectionOrder = [];
             availableMembersForRound = [];
+            selected16Members = []; // 초기화
 
-            // 화면 전환
-            welcomeScreen.style.display = 'none';
-            gameScreen.style.display = 'block';
+            // 화면 초기 상태 설정
+            rulesScreen.style.display = 'flex';
+            gameScreen.style.display = 'none';
+            finalSelectionDisplay.style.display = 'none';
             resultsScreen.style.display = 'none';
-            tieBreakerInfoElement.style.display = 'none';
-
             updateInstructionText();
-            startNewRound();
         }
 
         function updateInstructionText() {
-            const nonEliminatedCount = Object.values(memberData).filter(m => !m.eliminated && !m.eliminatedPhase2).length;
-            if (gamePhase === 'initialSelection') {
+            const nonEliminatedCount = Object.values(memberData).filter(m => !m.eliminated).length;
+            if (gamePhase === 'rules') {
+                instructionTextElement.textContent = ''; // 룰스크린에서는 사용하지 않음
+                document.querySelector('#gameScreen h2').style.display = 'none'; // 룰스크린에서는 3명 선택 문구 숨김
+            } else if (gamePhase === 'phase1') {
                 instructionTextElement.textContent = `현재 인원: ${nonEliminatedCount}명. ${initialSelectionTarget}명을 선발 중입니다.`;
-                selectionInstructionElement.textContent = `3명 중 좋아하는 순서대로 2명을 선택하세요!`;
-                tieBreakerInfoElement.style.display = 'none';
-            } else if (gamePhase === 'finalSelection') {
-                instructionTextElement.textContent = `최종 선발 16인이 결정되었습니다. 당신의 센터를 뽑아주세요! (남은 멤버: ${nonEliminatedCount}명)`;
-                selectionInstructionElement.textContent = `2명 중 우승자를 선택하세요!`;
-                tieBreakerInfoElement.style.display = 'none';
-            } else if (gamePhase === 'tieBreakerForRank1') {
-                instructionTextElement.textContent = `공동 1등 발생! 단독 1등을 가리기 위한 결승 라운드!`;
-                selectionInstructionElement.textContent = `2명 중 우승자를 선택하세요!`; // 결승은 항상 2명
-                tieBreakerInfoElement.style.display = 'block';
+                document.querySelector('#gameScreen h2').style.display = 'block';
+            } else if (gamePhase === 'phase2') {
+                instructionTextElement.textContent = `최종 선발 16인 순위 경쟁 중입니다.`;
+                document.querySelector('#gameScreen h2').style.display = 'block';
             } else if (gamePhase === 'results') {
                 instructionTextElement.textContent = `게임이 종료되었습니다! 최종 결과를 확인하세요.`;
-                selectionInstructionElement.textContent = ``;
-                tieBreakerInfoElement.style.display = 'none';
+                document.querySelector('#gameScreen h2').style.display = 'none';
+            }
+            // 모바일에서 h2 숨김 처리를 위해 round-info도 함께 업데이트 필요
+            if (window.innerWidth <= 768) {
+                document.querySelector('.round-info').style.display = (gamePhase === 'phase1' || gamePhase === 'phase2') ? 'none' : 'block';
+                document.querySelector('#gameScreen h2').style.display = 'none'; // 모바일에서는 아예 숨김
+            } else {
+                document.querySelector('.round-info').style.display = 'block';
+                document.querySelector('#gameScreen h2').style.display = 'block';
             }
         }
 
-        // 멤버 정렬 함수: 점수 > 1순위 득표수 > 2순위 득표수 > 무작위 순
-        function getSortedMembers(includeEliminated = false) {
-            let filteredMembers = Object.keys(memberData).map(name => ({
-                name: name,
-                score: memberData[name].score,
-                firstRankSelections: memberData[name].firstRankSelections,
-                secondRankSelections: memberData[name].secondRankSelections,
-                eliminated: memberData[name].eliminated || memberData[name].eliminatedPhase2
-            }));
+        function getEligibleMembersForRound() {
+            let eligible = [];
+            if (gamePhase === 'phase1') {
+                eligible = Object.keys(memberData).filter(name => !memberData[name].eliminated && memberData[name].appearances < maxAppearancesPhase1);
+            } else if (gamePhase === 'phase2') {
+                // 2페이즈에서는 16인 선발 멤버만 대상으로 함
+                eligible = selected16Members.filter(name => !memberData[name].eliminated); // eliminated는 phase2에서 사용 안 함
 
-            if (!includeEliminated) {
-                filteredMembers = filteredMembers.filter(m => !m.eliminated);
+                // 모든 멤버가 최소 한번씩은 등장하도록 보장
+                const notYetAppearedInPhase2 = eligible.filter(name => !memberData[name].appearedInPhase2);
+                if (notYetAppearedInPhase2.length > 0) {
+                    // 아직 등장하지 않은 멤버가 있으면 그 멤버들을 우선적으로 고려
+                    eligible = notYetAppearedInPhase2.filter(name => memberData[name].appearances < maxAppearancesPhase2Initial);
+                } else {
+                    // 모두 한 번 이상 등장했다면, 기본 등장 횟수 제한 내의 멤버들로 진행
+                    eligible = eligible.filter(name => memberData[name].appearances < maxAppearancesPhase2Initial);
+                }
+
+                // 등장 횟수 제한 완화 로직 (고득점자 우선)
+                if (eligible.length < membersPerRound) { // 3명 채우기 어려울 때
+                    const sortedMembers = getSortedMembers(false); // 점수 높은 순으로 정렬
+                    let additionalEligible = [];
+                    for (const member of sortedMembers) {
+                        // 16인 멤버 중 아직 등장 횟수 완화 범위에 있는 멤버만 추가
+                        if (selected16Members.includes(member.name) && !eligible.includes(member.name) &&
+                            memberData[member.name].appearances < maxAppearancesPhase2Relaxed) {
+                            additionalEligible.push(member.name);
+                        }
+                        if (eligible.length + additionalEligible.length >= membersPerRound) break;
+                    }
+                    eligible = eligible.concat(additionalEligible);
+                }
+
             }
 
-            return filteredMembers.sort((a, b) => {
-                if (b.score !== a.score) {
-                    return b.score - a.score;
-                }
-                // 점수 동점 시 1순위 득표수 비교 (페이즈 2의 3점 득표수 포함)
-                if (b.firstRankSelections !== a.firstRankSelections) {
-                    return b.firstRankSelections - a.firstRankSelections;
-                }
-                // 1순위 득표수도 동점 시 2순위 득표수 비교 (페이즈 2의 1점 득표수는 여기 포함 안됨)
-                if (b.secondRankSelections !== a.secondRankSelections) {
-                    return b.secondRankSelections - a.secondRankSelections;
-                }
-                // 최종 무작위
-                return Math.random() - 0.5;
-            });
-        }
-
-
-        function getEligibleMembersForRound(allowAppearanceRuleRelax = false, allowGroupRuleRelax = false) {
-            let eligible = Object.keys(memberData).filter(name => !memberData[name].eliminated && !memberData[name].eliminatedPhase2);
-
-            if (gamePhase === 'initialSelection') {
-                if (!allowAppearanceRuleRelax) { // 규칙 완화가 허용되지 않았다면 등장 횟수 제한 적용
-                    eligible = eligible.filter(name => memberData[name].appearances < maxAppearancesPhase1);
-                }
-            } else if (gamePhase === 'finalSelection') {
-                // 페이즈 2에서는 등장 횟수 제한 없고, 4번 이상 선택받지 못한 멤버는 제외 (여기는 완화하지 않음)
-                eligible = eligible.filter(name => memberData[name].notSelectedCountPhase2 < maxNotSelectedCountPhase2);
-
-                // 현재 상위 16명 내의 멤버만 라운드에 등장하도록 (남은 멤버 중)
-                const sortedMembers = getSortedMembers(false);
-                const currentTop16Names = sortedMembers.slice(0, initialSelectionTarget).map(m => m.name);
-                eligible = eligible.filter(name => currentTop16Names.includes(name));
-
-            } else if (gamePhase === 'tieBreakerForRank1') {
-                // 공동 1등 동점자 라운드: 현재 최고 점수 멤버들만 대상으로 하고, 등장 횟수/탈락 제한 없음
-                const sortedMembers = getSortedMembers(false);
-                if (sortedMembers.length === 0) return [];
-
-                const topScore = sortedMembers[0].score;
-                eligible = sortedMembers.filter(m => m.score === topScore).map(m => m.name);
-            }
             return eligible;
         }
 
+
         function selectMembersForRound() {
             let selected = [];
-            const numMembersToSelect = (gamePhase === 'initialSelection') ? membersPerRoundPhase1 : membersPerRoundPhase2;
-
-            // 결승 라운드는 규칙 완화 없이 진행 (단, 멤버가 부족하면 빈 배열 반환)
-            if (gamePhase === 'tieBreakerForRank1') {
-                let eligiblePoolTieBreaker = getEligibleMembersForRound();
-                if (eligiblePoolTieBreaker.length < numMembersToSelect) {
-                    return []; // 결승 진행 불가
-                }
-                eligiblePoolTieBreaker.sort(() => Math.random() - 0.5);
-                return eligiblePoolTieBreaker.slice(0, numMembersToSelect);
-            }
-
-            // 1단계: 엄격한 규칙 (등장 횟수, 그룹 제약) 적용하여 시도
-            let eligiblePoolStrict = getEligibleMembersForRound(false, false);
+            let eligiblePool = getEligibleMembersForRound();
             let attempts = 0;
-            const maxAttempts = 500; // 충분한 시도 횟수
+            const maxAttempts = 500;
 
-            if (eligiblePoolStrict.length >= numMembersToSelect) { // 엄격한 규칙으로 멤버를 충분히 뽑을 수 있다면 시도
-                let tempEligiblePool = [...eligiblePoolStrict]; // 복사하여 사용
-                tempEligiblePool.sort(() => Math.random() - 0.5);
+            // eligiblePool 멤버들을 섞어서 무작위성을 높임
+            // 2페이즈에서 '모든 멤버 최소 한번 등장' 규칙을 위해, 등장하지 않은 멤버가 있다면 우선적으로 섞기 전에 추가
+            if (gamePhase === 'phase2') {
+                const notYetAppeared = eligiblePool.filter(name => !memberData[name].appearedInPhase2);
+                if (notYetAppeared.length > 0) {
+                    // 아직 등장하지 않은 멤버 중 일부를 우선적으로 selected에 추가 시도
+                    // 이 부분이 너무 강하면 다른 규칙(같은 조합 방지)과 충돌 가능성이 높아짐
+                    // 일단 현재의 무작위 선택 로직에 맡기고, 부족하면 완화 로직이 돕도록
+                    // -> selectMembersForRound에서는 이전처럼 무작위로 뽑고,
+                    // -> getEligibleMembersForRound에서 이미 우선순위를 줘서 반환하는 것이 더 자연스러움
+                }
+            }
+            eligiblePool.sort(() => Math.random() - 0.5);
 
-                while (selected.length < numMembersToSelect && attempts < maxAttempts && tempEligiblePool.length > 0) {
-                    const candidateIndex = Math.floor(Math.random() * tempEligiblePool.length);
-                    const candidate = tempEligiblePool[candidateIndex];
+            while (selected.length < membersPerRound && eligiblePool.length > 0 && attempts < maxAttempts) {
+                const candidate = eligiblePool.shift(); // 앞에서부터 하나씩 시도
 
-                    let canAdd = true;
-                    if (gamePhase === 'initialSelection') { // 그룹 등장 제한은 페이즈 1에만 적용
-                        for (const existingMember of selected) {
-                            if (memberData[existingMember].previousRoundGroup.has(candidate) ||
-                                memberData[candidate].previousRoundGroup.has(existingMember)) {
-                                canAdd = false;
-                                break;
-                            }
-                        }
+                let canAdd = true;
+                // "같이 등장했던 멤버도 함께 나오지 않으며" 규칙 적용
+                // selected에 이미 있는 멤버들과 candidate가 이전 라운드에서 같이 나왔던 적이 있는지 확인
+                for (const existingMember of selected) {
+                    if (memberData[existingMember].previousRoundGroup.has(candidate) ||
+                        memberData[candidate].previousRoundGroup.has(existingMember)) { // 양방향 체크
+                        canAdd = false;
+                        break;
                     }
-
-                    if (canAdd) {
-                        selected.push(candidate);
-                        tempEligiblePool.splice(candidateIndex, 1); // 선택된 멤버는 후보 풀에서 제거
-                    }
-                    attempts++;
                 }
-            }
 
-
-            // 2단계: 엄격한 규칙으로 못 뽑았다면, '함께 등장했던 그룹' 규칙 완화하여 재시도 (페이즈 1 & 2)
-            if (selected.length < numMembersToSelect) {
-                console.warn("경고: 함께 등장했던 그룹 규칙 때문에 충분한 멤버를 찾지 못하여 규칙을 완화합니다.");
-                selected = []; // 기존에 뽑힌 멤버 초기화
-                let eligiblePoolRelaxGroup = getEligibleMembersForRound(false, true); // 등장 횟수만 지킴 (그룹 제한 무시)
-                eligiblePoolRelaxGroup.sort(() => Math.random() - 0.5); // 다시 섞기
-                attempts = 0;
-
-                let tempEligiblePool = [...eligiblePoolRelaxGroup];
-
-                while (selected.length < numMembersToSelect && attempts < maxAttempts * 2 && tempEligiblePool.length > 0) {
-                    const candidateIndex = Math.floor(Math.random() * tempEligiblePool.length);
-                    const candidate = tempEligiblePool[candidateIndex];
+                if (canAdd) {
                     selected.push(candidate);
-                    tempEligiblePool.splice(candidateIndex, 1);
-                    attempts++;
+                } else {
+                    // 추가할 수 없으면 eligiblePool 뒤로 다시 보내서 다음 시도에 사용
+                    eligiblePool.push(candidate);
+                }
+                attempts++;
+            }
+
+            // 만약 3명을 뽑지 못했으면, 규칙을 완화하여 최대한 채움 (게임 진행을 위해)
+            // (이미 getEligibleMembersForRound에서 완화 시도를 했지만, 여기서도 다시 한번 최종적으로 부족할 경우를 대비)
+            if (selected.length < membersPerRound) {
+                const allRemainingEligible = Object.keys(memberData).filter(name => {
+                    const maxApp = (gamePhase === 'phase1') ? maxAppearancesPhase1 : maxAppearancesPhase2Relaxed; // 2페이즈는 완화된 횟수까지 고려
+                    return !memberData[name].eliminated && memberData[name].appearances < maxApp && !selected.includes(name) &&
+                           (gamePhase !== 'phase2' || selected16Members.includes(name)); // 2페이즈는 16인 선발 멤버만
+                });
+
+                // 부족한 수만큼 채움 (규칙 완화) - 무작위로 채움
+                const remainingToPick = allRemainingEligible.filter(name => !selected.includes(name));
+                while (selected.length < membersPerRound && remainingToPick.length > 0) {
+                    const randomMember = remainingToPick.splice(Math.floor(Math.random() * remainingToPick.length), 1)[0];
+                    selected.push(randomMember);
                 }
             }
 
-            // 3단계: 그래도 부족하면, '등장 횟수' 규칙 완화하여 재시도 (페이즈 1에만 해당)
-            // 페이즈 2는 이미 등장 횟수 제한 없음 (getEligibleMembersForRound의 로직 확인)
-            if (gamePhase === 'initialSelection' && selected.length < numMembersToSelect) {
-                console.warn("경고: 등장 횟수 규칙 때문에 충분한 멤버를 찾지 못하여 규칙을 완화합니다.");
-                selected = []; // 기존에 뽑힌 멤버 초기화
-                let eligiblePoolRelaxAll = getEligibleMembersForRound(true, true); // 모든 규칙 완화 (등장 횟수, 그룹)
-                eligiblePoolRelaxAll.sort(() => Math.random() - 0.5); // 다시 섞기
-                attempts = 0;
-
-                let tempEligiblePool = [...eligiblePoolRelaxAll];
-                while (selected.length < numMembersToSelect && attempts < maxAttempts * 3 && tempEligiblePool.length > 0) {
-                    const candidateIndex = Math.floor(Math.random() * tempEligiblePool.length);
-                    const candidate = tempEligiblePool[candidateIndex];
-                    selected.push(candidate);
-                    tempEligiblePool.splice(candidateIndex, 1);
-                    attempts++;
-                }
+            // 최종적으로 뽑힌 멤버가 3명 미만이면 게임을 종료할 수 있음
+            if (selected.length < membersPerRound) {
+                alert("더 이상 라운드를 진행할 수 있는 멤버가 부족하여 게임을 종료합니다.");
+                gamePhase = 'results';
+                displayResults();
+                return;
             }
 
-            // 4단계: 최후의 수단 - 강제로 필요한 수만큼 채움 (남은 멤버 중 무작위)
-            // 모든 규칙을 완화했음에도 멤버가 부족하면, 강제로 채워 넣음
-            if (selected.length < numMembersToSelect) {
-                console.warn("경고: 모든 규칙을 완화했음에도 멤버가 부족합니다. 남은 멤버 중 무작위로 채워 넣습니다.");
-                const allRemainingEligible = Object.keys(memberData).filter(name =>
-                    !memberData[name].eliminated && !memberData[name].eliminatedPhase2 && !selected.includes(name)
-                );
-                allRemainingEligible.sort(() => Math.random() - 0.5);
-
-                while (selected.length < numMembersToSelect && allRemainingEligible.length > 0) {
-                    selected.push(allRemainingEligible.shift());
-                }
-            }
-
-            return selected;
+            availableMembersForRound = selected;
+            renderMembers();
         }
 
 
         function startNewRound() {
             currentRound++;
-            currentRoundElement.textContent = currentRound;
+            currentRoundElement.textContent = currentRound + " 라운드";
             selectionOrder = []; // 새 라운드 시작 시 선택 순서 초기화
             memberSelectionDiv.innerHTML = ''; // 이전 멤버 카드 제거
 
-            const nonEliminatedCount = Object.values(memberData).filter(m => !m.eliminated && !m.eliminatedPhase2).length;
-            const sortedMembers = getSortedMembers(false); // 현재 점수 기준 정렬 (탈락자 제외)
+            updateInstructionText();
 
-            // 1. 페이즈 전환 및 게임 종료 조건 확인
-            if (gamePhase === 'initialSelection') {
-                // 페이즈 1 -> 페이즈 2 전환 조건: 남은 멤버가 16명 이하일 때
+            // 게임 페이즈 전환 로직 및 종료 조건 확인
+            const nonEliminatedCount = Object.values(memberData).filter(m => !m.eliminated).length;
+
+            if (gamePhase === 'phase1') {
                 if (nonEliminatedCount <= initialSelectionTarget) {
-                    gamePhase = 'finalSelection';
-                    currentRound = 0; // 페이즈 변경 시 라운드 초기화
-                    // alert(`1차 선발이 완료되었습니다! 이제 최종 선발 16인을 위한 경쟁을 시작합니다.`); // 알림 제거
+                    // 16명 선발 완료
+                    gamePhase = 'finalSelectionDisplay'; // 2페이즈 시작 전 중간 화면
+                    selected16Members = Object.keys(memberData)
+                                            .filter(name => !memberData[name].eliminated)
+                                            .sort((a, b) => memberData[b].score - memberData[a].score)
+                                            .slice(0, initialSelectionTarget);
+                    displayFinalSelectionScreen();
+                    return;
                 }
-            } else if (gamePhase === 'finalSelection') {
-                // 페이즈 2 종료 조건: 등장 가능한 멤버가 1명 이하일 때
-                const eligibleForPhase2 = getEligibleMembersForRound();
-                if (eligibleForPhase2.length <= 1) { // 1명만 남았거나 더 이상 진행할 수 없는 경우
-                    // 이제 공동 1등 검사 로직 추가 (기존에는 여기서 바로 종료였음)
-                    const topScorers = getSortedMembers(false).filter((m, i, arr) => i === 0 || m.score === arr[0].score);
-                    if (topScorers.length > 1) {
-                        gamePhase = 'tieBreakerForRank1';
-                        // console.log('공동 1등 발생! 결승 라운드로 전환:', topScorers.map(m => m.name)); // 디버그
-                        // 결승 라운드는 별도로 시작, 여기서는 바로 다음 단계로 넘어가지 않고 리턴
-                    } else {
-                        // 단독 1등이 확정되었거나 더 이상 진행할 멤버가 없는 경우
-                        gamePhase = 'results';
-                        displayResults();
-                        return;
-                    }
-                }
-            } else if (gamePhase === 'tieBreakerForRank1') {
-                // 결승 라운드 종료 조건: 1명만 남거나, 더 이상 라운드 진행 불가
-                const eligibleForTieBreaker = getEligibleMembersForRound();
-                if (eligibleForTieBreaker.length <= 1) {
+            } else if (gamePhase === 'phase2') {
+                if (checkFinalConditions()) {
+                    // 2페이즈 종료 조건 만족
                     gamePhase = 'results';
                     displayResults();
                     return;
                 }
             }
 
-
-            updateInstructionText();
-
-            // 2. 라운드에 표시할 멤버 선택
-            availableMembersForRound = selectMembersForRound();
-
-            // 만약 더 이상 진행할 멤버가 없다면 바로 결과 화면으로
-            if (availableMembersForRound.length === 0) {
-                console.warn("더 이상 라운드를 진행할 멤버가 없습니다. 결과를 표시합니다.");
+            // 모든 멤버가 등장 횟수 제한에 걸리거나, 남은 멤버가 3명 미만이면 게임 종료 (비상 탈출)
+            const canStillPlay = getEligibleMembersForRound().length >= membersPerRound;
+            if (!canStillPlay) {
+                alert("더 이상 라운드를 진행할 수 있는 멤버가 부족하여 게임을 종료합니다.");
                 gamePhase = 'results';
                 displayResults();
                 return;
             }
 
-            // 3. 멤버 카드 생성 및 표시
-            availableMembersForRound.forEach(memberName => {
-                const memberCard = document.createElement('div');
-                memberCard.classList.add('member-card');
-                memberCard.dataset.name = memberName;
+            selectMembersForRound();
+        }
 
-                // 이미지 경로 설정: PNG 파일임을 명시합니다.
-                const imageName = memberName.replace(/\s/g, '_') + '.png'; // 공백을 언더스코어로 변경하고 .png 확장자 추가
-                const imagePath = `img/${imageName}`; // 'img' 폴더에 이미지가 있다고 가정
-                
-                memberCard.innerHTML = `
-                    <img src="${imagePath}" alt="${memberName}">
-                    <p>${memberName}</p>
+        function renderMembers() {
+            memberSelectionDiv.innerHTML = '';
+            availableMembersForRound.forEach(name => {
+                const card = document.createElement('div');
+                card.classList.add('member-card');
+                card.dataset.name = name;
+                card.innerHTML = `
+                    <img src="./images/${name}.png" alt="${name}" onerror="this.onerror=null; this.src='./images/default.png';">
+                    <p>${name}</p>
                     <div class="selection-rank"></div>
                 `;
-                memberCard.addEventListener('click', () => selectMember(memberName));
-                memberSelectionDiv.appendChild(memberCard);
-
-                // 등장 횟수 업데이트
-                memberData[memberName].appearances++;
-                memberData[memberName].lastSeen = currentRound;
-
-                // 함께 등장했던 멤버 기록 업데이트
-                const currentRoundGroup = availableMembersForRound.filter(m => m !== memberName);
-                currentRoundGroup.forEach(otherMember => {
-                    memberData[memberName].previousRoundGroup.add(otherMember);
-                });
+                card.addEventListener('click', handleCardClick);
+                memberSelectionDiv.appendChild(card);
             });
         }
 
+        function handleCardClick(event) {
+            const clickedCard = event.currentTarget;
+            const clickedMemberName = clickedCard.dataset.name;
 
-        function selectMember(selectedName) {
-            const memberCard = document.querySelector(`.member-card[data-name="${selectedName}"]`);
-
-            if (memberCard.classList.contains('processed')) {
+            if (clickedCard.classList.contains('processed')) {
                 return; // 이미 처리된 카드는 클릭 무시
             }
 
-            // 페이즈 1 (16인 선발전)
-            if (gamePhase === 'initialSelection') {
-                if (selectionOrder.length < 2) {
-                    selectionOrder.push(selectedName);
-                    memberCard.classList.add('selected');
-                    memberCard.querySelector('.selection-rank').textContent = selectionOrder.length;
-
-                    if (selectionOrder.length === 2) {
-                        setTimeout(() => processSelectionsInitialPhase(), roundDelay);
-                    }
+            // 선택 취소 로직 (가장 마지막에 선택된 것만 취소)
+            const indexInSelection = selectionOrder.indexOf(clickedMemberName);
+            if (indexInSelection !== -1) {
+                if (indexInSelection === selectionOrder.length - 1) { // 마지막 선택 멤버인 경우에만 취소
+                    selectionOrder.pop();
+                    clickedCard.classList.remove('selected');
+                    clickedCard.querySelector('.selection-rank').textContent = '';
                 }
+                return;
             }
-            // 페이즈 2 (센터 선발전) 또는 결승 라운드 (공동 1등)
-            else if (gamePhase === 'finalSelection' || gamePhase === 'tieBreakerForRank1') {
-                selectionOrder.push(selectedName);
-                memberCard.classList.add('selected');
-                memberCard.querySelector('.selection-rank').textContent = 1; // 단일 선택이므로 항상 1위로 표시
 
-                setTimeout(() => processSelectionsFinalPhase(), roundDelay);
+            const maxDirectSelections = 2; // 1순위, 2순위만 직접 선택
+
+            if (selectionOrder.length < maxDirectSelections) {
+                selectionOrder.push(clickedMemberName);
+                clickedCard.classList.add('selected');
+                clickedCard.querySelector('.selection-rank').textContent = selectionOrder.length; // 1순위:1, 2순위:2
+
+                if (selectionOrder.length === maxDirectSelections) {
+                    // 모든 직접 선택이 완료되면 다음 단계 진행 (자동 선택 및 점수 적용)
+                    applyScoresAndProceed();
+                }
             }
         }
 
+        function applyScoresAndProceed() {
+            const currentRoundMembers = availableMembersForRound; // 현재 라운드에 나온 모든 멤버
 
-        function processSelectionsInitialPhase() {
-            const allSelectedMembers = availableMembersForRound; // 이 라운드에 표시된 모든 멤버
+            // 모든 카드 클릭 비활성화
+            document.querySelectorAll('.member-card').forEach(card => card.classList.add('processed'));
 
-            allSelectedMembers.forEach(name => {
-                const memberCard = document.querySelector(`.member-card[data-name="${name}"]`);
-                memberCard.classList.add('processed'); // 카드 비활성화
-
-                if (name === selectionOrder[0]) { // 1순위 선택
-                    memberData[name].score += scores.phase1.rank1;
-                    memberData[name].firstRankSelections++;
-                    memberData[name].zeroScoreCount = 0; // 점수를 얻었으므로 0점 카운트 초기화
-                } else if (name === selectionOrder[1]) { // 2순위 선택
-                    memberData[name].score += scores.phase1.rank2;
-                    memberData[name].secondRankSelections++;
-                    memberData[name].zeroScoreCount = 0; // 점수를 얻었으므로 0점 카운트 초기화
-                } else { // 선택되지 않은 멤버 (3순위)
-                    memberData[name].score += scores.phase1.rank3; // 0점 추가 (변화 없음)
-                    memberData[name].zeroScoreCount++;
-                    if (memberData[name].zeroScoreCount >= maxZeroScoreCount) {
-                        memberData[name].eliminated = true; // 3번 이상 0점이면 탈락
-                        console.log(`${name} (initialSelection) 3회 0점 획득으로 탈락!`);
-                    }
-                }
-            });
-
-            setTimeout(startNewRound, roundDelay * 2); // 다음 라운드 시작
-        }
-
-        function processSelectionsFinalPhase() {
-            const selectedMember = selectionOrder[0];
-            const unselectedMember = availableMembersForRound.find(name => name !== selectedMember);
-
-            const scoreType = gamePhase === 'tieBreakerForRank1' ? 'tieBreakerForRank1' : 'phase2';
-
-            // 선택된 멤버 처리
-            memberData[selectedMember].score += scores[scoreType].selected;
-            memberData[selectedMember].firstRankSelections++; // 1순위 득표수 카운트
-            memberData[selectedMember].notSelectedCountPhase2 = 0; // 선택받았으니 카운트 초기화
-
-            // 선택되지 않은 멤버 처리
+            // 3순위 자동 선택
+            const unselectedMember = currentRoundMembers.find(name => !selectionOrder.includes(name));
             if (unselectedMember) {
-                memberData[unselectedMember].score += scores[scoreType].notSelected;
-                // 페이즈 2에서만 탈락 기준 적용
-                if (gamePhase === 'finalSelection') {
-                    memberData[unselectedMember].notSelectedCountPhase2++;
-                    if (memberData[unselectedMember].notSelectedCountPhase2 >= maxNotSelectedCountPhase2) {
-                        memberData[unselectedMember].eliminatedPhase2 = true;
-                        console.log(`${unselectedMember} (finalSelection) 4회 미선택으로 탈락!`);
-                    }
+                selectionOrder.push(unselectedMember); // 3순위로 자동 추가
+                // 3순위 카드에 '3' 표시 (선택되지 않아도 명시적으로 3순위)
+                const unselectedCard = document.querySelector(`.member-card[data-name="${unselectedMember}"]`);
+                if (unselectedCard) {
+                    unselectedCard.classList.add('selected'); // 3순위도 선택된 것으로 표시
+                    unselectedCard.querySelector('.selection-rank').textContent = '3';
                 }
             }
 
-            // 모든 카드 비활성화
-            availableMembersForRound.forEach(name => {
-                const memberCard = document.querySelector(`.member-card[data-name="${name}"]`);
-                memberCard.classList.add('processed');
+            // 점수 부여 및 기타 데이터 업데이트
+            currentRoundMembers.forEach(name => {
+                const rankIndex = selectionOrder.indexOf(name);
+                let scoreToApply = 0;
+
+                if (gamePhase === 'phase1') {
+                    if (rankIndex === 0) scoreToApply = scores.phase1.rank1;
+                    else if (rankIndex === 1) scoreToApply = scores.phase1.rank2;
+                    else if (rankIndex === 2) scoreToApply = scores.phase1.rank3; // 0점
+                } else if (gamePhase === 'phase2') {
+                    if (rankIndex === 0) scoreToApply = scores.phase2.rank1;
+                    else if (rankIndex === 1) scoreToApply = scores.phase2.rank2;
+                    else if (rankIndex === 2) scoreToApply = scores.phase2.rank3; // 0점
+                }
+
+                memberData[name].score += scoreToApply;
+
+                // 0점 처리 (1페이즈 탈락 조건용)
+                if (gamePhase === 'phase1' && scoreToApply === 0) {
+                    memberData[name].zeroScoreCount++;
+                }
+
+                // 2페이즈에서 등장했는지 여부 기록
+                if (gamePhase === 'phase2') {
+                    memberData[name].appearedInPhase2 = true;
+                }
+
+                // 등장 횟수 증가
+                memberData[name].appearances++;
+
+                // "같이 등장했던 멤버도 함께 나오지 않으며" 규칙을 위한 기록
+                // 이전에 함께 나왔던 멤버들 Set에 현재 라운드의 다른 멤버들 추가
+                currentRoundMembers.forEach(otherName => {
+                    if (name !== otherName) {
+                        memberData[name].previousRoundGroup.add(otherName);
+                    }
+                });
             });
 
-            setTimeout(startNewRound, roundDelay * 2); // 다음 라운드 시작
+            // 1페이즈 탈락 처리
+            if (gamePhase === 'phase1') {
+                currentRoundMembers.forEach(name => {
+                    if (memberData[name].zeroScoreCount >= 3) {
+                        memberData[name].eliminated = true; // 0점을 3번 받으면 탈락
+                    }
+                });
+            }
+
+            // 딜레이 없이 바로 다음 라운드 시작
+            startNewRound();
+        }
+
+        function displayFinalSelectionScreen() {
+            gameScreen.style.display = 'none';
+            finalSelectionDisplay.style.display = 'block';
+            selected16MembersDisplay.innerHTML = '';
+
+            // 16인 멤버를 점수순으로 정렬하여 표시
+            const sortedFinal16 = selected16Members.map(name => ({
+                name: name,
+                score: memberData[name].score
+            })).sort((a, b) => b.score - a.score); // 점수 내림차순
+
+            sortedFinal16.forEach(member => {
+                const card = document.createElement('div');
+                card.classList.add('selected-16-member-card');
+                card.innerHTML = `
+                    <img src="./images/${member.name}.png" alt="${member.name}" onerror="this.onerror=null; this.src='./images/default.png';">
+                    <p>${member.name}</p>
+                `;
+                selected16MembersDisplay.appendChild(card);
+            });
+        }
+
+        function getSortedMembers(includeEliminated = false) {
+            let sortable = [];
+            for (let name in memberData) {
+                if (includeEliminated || !memberData[name].eliminated) {
+                    sortable.push({
+                        name: name,
+                        score: memberData[name].score
+                    });
+                }
+            }
+            // 점수가 높은 순으로 정렬. 점수가 같으면 이름(사전순)으로 정렬 (동점 시 일관성 유지)
+            sortable.sort((a, b) => {
+                if (b.score !== a.score) {
+                    return b.score - a.score;
+                }
+                return a.name.localeCompare(b.name);
+            });
+            return sortable;
+        }
+
+        function checkFinalConditions() {
+            const sortedMembers = getSortedMembers(false); // 탈락자 제외
+            if (sortedMembers.length < initialSelectionTarget) {
+                // 아직 16인이 모이지 않았으면 종료 조건을 체크할 필요 없음 (이 경우는 이미 phase1에서 잡힘)
+                return false;
+            }
+
+            const top16 = sortedMembers.slice(0, initialSelectionTarget);
+
+            // 1위, 2위, 3위는 공동 순위 불가 (점수 차이 1점 이상)
+            if (top16.length >= 2 && top16[0].score === top16[1].score) return false; // 공동 1위
+            if (top16.length >= 3 && top16[1].score === top16[2].score) return false; // 공동 2위
+            if (top16.length >= 4 && top16[2].score === top16[3].score) return false; // 공동 3위
+
+            // 1위와 16위의 점수 차이 최소 40점 이상
+            if (top16.length >= initialSelectionTarget && (top16[0].score - top16[initialSelectionTarget - 1].score < 40)) {
+                return false;
+            }
+
+            // 공동 순위가 3명 이상인 경우가 없어야 함 (1,2,3위는 위에서 처리됨)
+            // 4위부터 16위까지 확인
+            for (let i = 3; i < top16.length - 2; i++) { // i는 4위부터 시작 (인덱스 3)
+                if (top16[i].score === top16[i + 1].score && top16[i + 1].score === top16[i + 2].score) {
+                    return false; // 3명 이상의 공동 순위 발견
+                }
+            }
+
+            // 모든 16인 멤버가 2페이즈에서 최소 한 번씩은 등장했는지 확인
+            const allAppearedInPhase2 = selected16Members.every(name => memberData[name].appearedInPhase2);
+            if (!allAppearedInPhase2) return false;
+
+            return true; // 모든 조건 만족
         }
 
 
         function displayResults() {
             gameScreen.style.display = 'none';
+            finalSelectionDisplay.style.display = 'none';
             resultsScreen.style.display = 'block';
+
+            const sortedMembers = getSortedMembers(false); // 탈락자 제외
+
+            // 최종 3인 표시
             topMembersDisplay.innerHTML = '';
+            if (sortedMembers.length > 0) {
+                const top3 = sortedMembers.slice(0, 3);
+                top3.forEach((member, index) => {
+                    const rank = index + 1;
+                    const card = document.createElement('div');
+                    card.classList.add('top-member-card', `rank${rank}`);
+                    card.innerHTML = `
+                        <div class="rank-label">${rank}위</div>
+                        <img src="./images/${member.name}.png" alt="${member.name}" onerror="this.onerror=null; this.src='./images/default.png';">
+                        <p>${member.name}</p>
+                        <span class="score" style="display:none;">${member.score}점</span>
+                    `;
+                    topMembersDisplay.appendChild(card);
+                });
+            }
+
+            // 최종 선발 16인 목록 표시
             finalSelectionList.innerHTML = '';
-
-            const sortedMembers = getSortedMembers(true); // 모든 멤버를 점수순으로 정렬
-
-            // 상위 3명 표시
-            const top3 = sortedMembers.slice(0, 3);
-            top3.forEach((member, index) => {
-                const rank = index + 1;
-                const memberCard = document.createElement('div');
-                memberCard.classList.add('top-member-card', `rank${rank}`);
-                // 이미지 경로 설정: PNG 파일임을 명시합니다.
-                memberCard.innerHTML = `
-                    <div class="rank-label">${rank}위</div>
-                    <img src="img/${member.name.replace(/\s/g, '_')}.png" alt="${member.name}">
-                    <p>${member.name}</p>
-                    <p class="score">점수: ${member.score}</p>
-                `;
-                topMembersDisplay.appendChild(memberCard);
+            const final16 = sortedMembers.slice(0, initialSelectionTarget);
+            final16.forEach((member, index) => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `${index + 1}위: ${member.name} (${member.score}점)`;
+                finalSelectionList.appendChild(listItem);
             });
+        }
 
-            // 최종 선발 16인 리스트 (점수가 0보다 크거나, 탈락하지 않은 멤버 중 상위 16명)
-            // 기준: 탈락하지 않은 멤버 중 점수가 높은 순으로 16명
-            const final16Members = getSortedMembers(false).slice(0, initialSelectionTarget);
+        function downloadTextResult() {
+            const sortedMembers = getSortedMembers(false);
+            let resultText = "--- MY HKT48 선발 결과 ---\n\n";
 
-            if (final16Members.length > 0) {
-                final16Members.forEach((member, index) => {
-                    const listItem = document.createElement('li');
-                    listItem.textContent = `${index + 1}위: ${member.name} (${member.score}점)`;
-                    finalSelectionList.appendChild(listItem);
+            resultText += "👑 최종 센터 3인 👑\n";
+            const top3 = sortedMembers.slice(0, 3);
+            if (top3.length > 0) {
+                top3.forEach((member, index) => {
+                    resultText += `${index + 1}위: ${member.name} (${member.score}점)\n`;
                 });
             } else {
-                const listItem = document.createElement('li');
-                listItem.textContent = "선발된 멤버가 없습니다.";
-                finalSelectionList.appendChild(listItem);
+                resultText += "선발된 멤버가 없습니다.\n";
             }
+            resultText += "\n";
+
+            resultText += "💖 최종 선발 16인 💖\n";
+            const final16 = sortedMembers.slice(0, initialSelectionTarget);
+            if (final16.length > 0) {
+                final16.forEach((member, index) => {
+                    resultText += `${index + 1}위: ${member.name} (${member.score}점)\n`;
+                });
+            } else {
+                resultText += "선발된 멤버가 없습니다.\n";
+            }
+            resultText += "\n--- 게임 종료 ---\n";
+
+            const blob = new Blob([resultText], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'MY_HKT48_선발결과.txt';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function downloadImageResult() {
+            // 결과를 보여주는 resultsScreen 요소를 캡처
+            html2canvas(document.querySelector('.container'), {
+                scale: 2, // 고해상도 이미지 생성을 위해 스케일 증가
+                useCORS: true, // 크로스 오리진 이미지 로드를 허용
+                logging: false // 콘솔 로깅 비활성화
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'MY_HKT48_선발결과.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }).catch(error => {
+                console.error("이미지 저장 실패:", error);
+                alert("이미지 저장에 실패했습니다. 다시 시도해 주세요.");
+            });
         }
 
 
-        // 이벤트 리스너
-        startGameButton.addEventListener('click', initializeGame);
-        document.getElementById('resetGameButton').addEventListener('click', () => {
-            if (confirm('정말로 게임을 처음부터 초기화하시겠습니까?')) {
-                welcomeScreen.style.display = 'flex';
-                gameScreen.style.display = 'none';
-                resultsScreen.style.display = 'none';
-                initializeGame(); // 초기화 후 바로 게임 시작하도록 변경 (선택사항)
-                // 만약 초기화 시 welcome 화면으로만 가고 싶다면 위 initializeGame() 호출 제거
-            }
-        });
-        document.getElementById('restartGameButton').addEventListener('click', initializeGame);
-
-        document.getElementById('downloadTextResultButton').addEventListener('click', () => {
-            const sortedMembers = getSortedMembers(true);
-            let resultText = "MY HKT48 선발 최종 결과\n\n";
-            resultText += "🏆 TOP 3 🏆\n";
-            sortedMembers.slice(0, 3).forEach((m, i) => {
-                resultText += `${i + 1}위: ${m.name} (${m.score}점)\n`;
-            });
-            resultText += "\n💖 최종 선발 16인 💖\n";
-            getSortedMembers(false).slice(0, initialSelectionTarget).forEach((m, i) => {
-                resultText += `${i + 1}위: ${m.name} (${m.score}점)\n`;
-            });
-
-            const blob = new Blob([resultText], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'my_hkt48_ranking_results.txt';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        });
-
-        document.getElementById('downloadImageResultButton').addEventListener('click', () => {
-            const container = document.querySelector('.container');
-            html2canvas(container, {
-                scale: 2, // 고해상도 이미지
-                useCORS: true, // 이미지 로드 시 CORS 문제 해결
-                allowTaint: true, // 이미지 오염 허용 (외부 이미지 사용 시 필요할 수 있음)
-                ignoreElements: (element) => {
-                    // 버튼은 스크린샷에서 제외
-                    return element.tagName === 'BUTTON' || element.id === 'downloadTextResultButton' || element.id === 'downloadImageResultButton' || element.id === 'restartGameButton';
-                }
-            }).then(canvas => {
-                const imageData = canvas.toDataURL('image/png');
-                const a = document.createElement('a');
-                a.href = imageData;
-                a.download = 'my_hkt48_ranking_results.png';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            });
-        });
-
-        // Initialize welcome screen on load
-        window.onload = () => {
-            welcomeScreen.style.display = 'flex';
-            gameScreen.style.display = 'none';
-            resultsScreen.style.display = 'none';
-        };
-
+        // 게임 초기 시작
+        initializeGame();
     </script>
 </body>
 </html>
