@@ -897,8 +897,8 @@
                 memberCard.classList.add('member-card');
                 memberCard.dataset.name = memberName;
 
-                // 이미지 경로 설정
-                const imageName = memberName.replace(/\s/g, '_') + '.webp'; // 공백을 언더스코어로 변경하고 .webp 확장자 추가
+                // 이미지 경로 설정: PNG 파일임을 명시합니다.
+                const imageName = memberName.replace(/\s/g, '_') + '.png'; // 공백을 언더스코어로 변경하고 .png 확장자 추가
                 const imagePath = `img/${imageName}`; // 'img' 폴더에 이미지가 있다고 가정
                 
                 memberCard.innerHTML = `
@@ -1028,9 +1028,10 @@
                 const rank = index + 1;
                 const memberCard = document.createElement('div');
                 memberCard.classList.add('top-member-card', `rank${rank}`);
+                // 이미지 경로 설정: PNG 파일임을 명시합니다.
                 memberCard.innerHTML = `
                     <div class="rank-label">${rank}위</div>
-                    <img src="img/${member.name.replace(/\s/g, '_')}.webp" alt="${member.name}">
+                    <img src="img/${member.name.replace(/\s/g, '_')}.png" alt="${member.name}">
                     <p>${member.name}</p>
                     <p class="score">점수: ${member.score}</p>
                 `;
